@@ -1,0 +1,2 @@
+# Hello world example for .talk language
+write "Hello from .talk!" in output.txt

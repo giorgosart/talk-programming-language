@@ -1,0 +1,6 @@
+# Variable + condition example
+variable x equal 5
+if x is greater than 3 then
+  write "x is big" in result.txt
+otherwise
+  write "x is small" in result.txt

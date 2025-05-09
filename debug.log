@@ -1,0 +1,7 @@
+Running script...
+[DEBUG] Line: 'write "Hello from .talk!" in output.txt'
+[DEBUG] Raw part: 'write'
+[DEBUG] Quoted token: 'Hello from .talk!'
+[DEBUG] Raw part: 'in'
+[DEBUG] Raw part: 'output.txt'
+Script executed successfully.

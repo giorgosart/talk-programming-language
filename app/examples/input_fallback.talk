@@ -1,0 +1,6 @@
+# Input and fallback example
+attempt
+  ask "Enter a number:" and store in num
+  write num in output.txt
+if that fails
+  write "Invalid input!" in output.txt
