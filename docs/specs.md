@@ -39,6 +39,60 @@ The MVP will focus on supporting basic logic, file operations, variable manageme
 ### 6. Comments
 - Any line starting with `#` is treated as a comment
 
+### 7. Block Scoping with Indentation
+- Indentation (4 spaces) defines a block of instructions.
+- Used for `if`, `otherwise`, `attempt`, and future loop support.
+- Allows nested blocks using consistent indentation depth.
+- No need for braces or explicit `end` statements.
+
+**Example:**
+```plaintext
+if x is greater than 10 then
+    write "big" in "log.txt"
+    if x is greater than 100 then
+        write "huge" in "log.txt"
+otherwise
+    write "small" in "log.txt"
+```
+
+#### Rules:
+- Block starts when indentation increases after a control keyword.
+- Block ends when indentation decreases.
+- Mixed spaces/tabs are disallowed (parser error).
+
+### 8. Looping Constructs
+
+Loops allow repeated execution of a block of instructions. The following loop types are supported:
+
+#### 1. Fixed-count loops
+```plaintext
+repeat 5 times
+    write "Hello" in "log.txt"
+```
+- Repeats the block 5 times.
+- The loop variable _index is implicitly available (starts from 0).
+
+#### 2. Condition-based loops (future)
+```
+repeat while x is smaller than 10
+    set x to x + 1
+```
+- Repeats the block while the condition is true.
+- Note: Only fixed-count loops are supported in the current MVP.
+
+#### 3. List-based loops (future)
+```
+repeat for each item in items
+    write item in "output.txt"
+```
+- Iterates over a list.
+- Planned for future releases.
+
+#### Rules:
+- Loop body is defined by indentation.
+- Loop variables persist within the block but not globally.
+- Loops can be nested inside each other or inside if blocks.
+
 ## 🧩 Core Components
 ### 1. Parser
 - Reads `.talk` files line-by-line

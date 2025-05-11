@@ -164,3 +164,82 @@
   - [x] Input and fallback
 
 - [x] **8.3** Prepare quickstart guide for new users (Dep: 8.2)
+
+## 🧱 Phase 7: Indentation-Based Block Scoping
+
+### **9.0 Indentation Support**
+> Allow nesting of control flow using consistent indentation.
+
+- [ ] **9.1** Update Tokenizer to support indentation tracking (Dep: 2.1)  
+  - [ ] Count leading spaces on each line  
+  - [ ] Generate `INDENT` and `DEDENT` tokens  
+  - [ ] Track line indentation stack  
+  - [ ] Throw syntax error on inconsistent indentation
+
+- [ ] **9.2** Update Parser to group blocks (Dep: 9.1)  
+  - [ ] Modify `IfInstruction`, `AttemptInstruction` to accept block children  
+  - [ ] Handle `INDENT` by entering recursive parse mode  
+  - [ ] Handle `DEDENT` by ending current block scope  
+  - [ ] Ensure `otherwise` matches the indentation of its parent `if`
+
+- [ ] **9.3** Update Execution Engine (Dep: 9.2)  
+  - [ ] Execute instruction blocks recursively  
+  - [ ] Attach child blocks to parent instruction objects  
+  - [ ] Preserve runtime context and variable scope across nested blocks
+
+- [ ] **9.4** Add Unit Tests for nested logic (Dep: 9.3)  
+  - [ ] Nested `if` inside `if`  
+  - [ ] `attempt` block with nested condition  
+  - [ ] Incorrect indentation edge cases
+
+- [ ] **9.5** Add Integration Tests for `.talk` scripts with indentation (Dep: 9.4)  
+  - [ ] Deep nesting (3+ levels)  
+  - [ ] Mixed blocks: `if` + `attempt`  
+  - [ ] Misaligned `otherwise` → error
+
+- [ ] **9.6** Update README and Examples (Dep: 9.5)  
+  - [ ] Add example of nested `if`  
+  - [ ] Document indentation rules  
+  - [ ] Warn against mixing tabs and spaces
+
+## 🔁 Phase 8: Looping Constructs
+
+### **10.0 Add Support for `repeat` Loop**
+
+- [ ] **10.1** Update Tokenizer to recognize `repeat` and `times` keywords (Dep: 2.1)  
+  - [ ] Recognize `repeat <number> times` as a loop declaration  
+  - [ ] Track indentation tokens inside loop blocks  
+  - [ ] Store numeric literal for loop count
+
+- [ ] **10.2** Define `RepeatInstruction` class (Dep: 3.1)  
+  - [ ] Hold `times` integer  
+  - [ ] Contain a list of instructions as the loop body  
+  - [ ] Expose implicit `_index` variable in each iteration
+
+- [ ] **10.3** Update Parser to support `repeat ... times` blocks (Dep: 10.1, 10.2)  
+  - [ ] Parse line into a `RepeatInstruction`  
+  - [ ] Capture nested block instructions using indentation  
+  - [ ] Raise syntax errors for malformed loops (e.g., missing number, no block)
+
+- [ ] **10.4** Update Runtime to execute `RepeatInstruction` (Dep: 10.3)  
+  - [ ] Evaluate loop count expression  
+  - [ ] Execute loop body `n` times  
+  - [ ] Inject `_index` as a local variable  
+  - [ ] Reset `_index` after loop
+
+- [ ] **10.5** Unit Tests (Dep: 10.4)  
+  - [ ] Loop runs exact number of times  
+  - [ ] `_index` is correct for each iteration  
+  - [ ] Nested loops work properly  
+  - [ ] Syntax errors: missing `times`, negative numbers, invalid block
+
+- [ ] **10.6** Integration Tests (Dep: 10.5)  
+  - [ ] `repeat 3 times` with simple write  
+  - [ ] Loop inside `if`, and vice versa  
+  - [ ] Loop with `attempt` block inside  
+  - [ ] `write _index` in output
+
+- [ ] **10.7** Update README and Examples (Dep: 10.6)  
+  - [ ] Document loop syntax and `_index`  
+  - [ ] Add sample `.talk` script with loop  
+  - [ ] Mention future support for `while` and `for each`
