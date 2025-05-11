@@ -15,11 +15,29 @@ public class Tokenizer {
 
     public List<Token> tokenize(List<String> lines) {
         List<Token> tokens = new ArrayList<>();
+        int prevIndent = 0;
+        List<Integer> indentStack = new ArrayList<>();
+        indentStack.add(0);
         for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i).trim();
-            if (line.isEmpty() || line.startsWith("#")) continue; // skip comments/empty
-            System.out.println("[DEBUG] Line: '" + line + "'");
-            int idx = 0;
+            String rawLine = lines.get(i);
+            String line = rawLine.replaceAll("\t", "    "); // treat tabs as 4 spaces
+            int indent = 0;
+            while (indent < line.length() && line.charAt(indent) == ' ') indent++;
+            if (line.trim().isEmpty() || line.trim().startsWith("#")) continue; // skip comments/empty
+            if (indent > prevIndent) {
+                tokens.add(new Token("INDENT", i + 1));
+                indentStack.add(indent);
+            } else if (indent < prevIndent) {
+                while (indent < prevIndent && indentStack.size() > 1) {
+                    tokens.add(new Token("DEDENT", i + 1));
+                    indentStack.remove(indentStack.size() - 1);
+                    prevIndent = indentStack.get(indentStack.size() - 1);
+                }
+            }
+            prevIndent = indent;
+            String trimmed = line.trim();
+            System.out.println("[DEBUG] Line: '" + trimmed + "'");
+            int idx = indent;
             while (idx < line.length()) {
                 if (Character.isWhitespace(line.charAt(idx))) {
                     idx++;
@@ -41,6 +59,11 @@ public class Tokenizer {
                     idx = end;
                 }
             }
+        }
+        // Close any remaining indents
+        while (indentStack.size() > 1) {
+            tokens.add(new Token("DEDENT", lines.size()));
+            indentStack.remove(indentStack.size() - 1);
         }
         return tokens;
     }

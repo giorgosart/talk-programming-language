@@ -6,6 +6,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import talk.RepeatInstruction;
+
 public class ParserTest {
     @Test
     void testVariableDeclaration() {
@@ -75,5 +77,50 @@ public class ParserTest {
         Parser parser = new Parser(tokens);
         Exception exception = assertThrows(RuntimeException.class, parser::parse);
         assertTrue(exception.getMessage().contains("Syntax error at line 5"));
+    }
+
+    @Test
+    void testParseNestedIfWithIndentBlocks() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = Arrays.asList(
+            "if x is greater than 10 then",
+            "    write \"big\" in log.txt",
+            "    if x is greater than 100 then",
+            "        write \"huge\" in log.txt",
+            "otherwise",
+            "    write \"small\" in log.txt"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof IfInstruction);
+        IfInstruction outerIf = (IfInstruction) instructions.get(0);
+        assertEquals(2, outerIf.getThenInstructions().size());
+        assertTrue(outerIf.getThenInstructions().get(0) instanceof WriteInstruction);
+        assertTrue(outerIf.getThenInstructions().get(1) instanceof IfInstruction);
+        IfInstruction innerIf = (IfInstruction) outerIf.getThenInstructions().get(1);
+        assertEquals(1, innerIf.getThenInstructions().size());
+        assertTrue(innerIf.getThenInstructions().get(0) instanceof WriteInstruction);
+        assertEquals(1, outerIf.getElseInstructions().size());
+        assertTrue(outerIf.getElseInstructions().get(0) instanceof WriteInstruction);
+    }
+
+    @Test
+    void testParseRepeatLoop() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = Arrays.asList(
+            "repeat 3 times",
+            "    write _index in log.txt"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof RepeatInstruction);
+        RepeatInstruction repeat = (RepeatInstruction) instructions.get(0);
+        assertEquals("3", repeat.getCountExpr());
+        assertEquals(1, repeat.getBody().size());
+        assertTrue(repeat.getBody().get(0) instanceof WriteInstruction);
     }
 }

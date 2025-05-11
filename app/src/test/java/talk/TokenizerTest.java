@@ -47,4 +47,28 @@ public class TokenizerTest {
         // The line number should be 2 (since the comment is skipped)
         assertEquals(2, tokens.get(0).lineNumber);
     }
+
+    @Test
+    void testIndentDedentTokens() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = Arrays.asList(
+            "if x is greater than 10 then",
+            "    write \"big\" in log.txt",
+            "    if x is greater than 100 then",
+            "        write \"huge\" in log.txt",
+            "otherwise",
+            "    write \"small\" in log.txt"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        // Should contain INDENT/DEDENT tokens at correct places
+        assertTrue(tokens.stream().anyMatch(t -> t.value.equals("INDENT")));
+        assertTrue(tokens.stream().anyMatch(t -> t.value.equals("DEDENT")));
+        // Check that the first INDENT comes after 'then'
+        int thenIdx = -1, indentIdx = -1;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i).value.equals("then")) thenIdx = i;
+            if (tokens.get(i).value.equals("INDENT")) { indentIdx = i; break; }
+        }
+        assertTrue(indentIdx > thenIdx);
+    }
 }

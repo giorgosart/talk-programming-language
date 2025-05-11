@@ -81,7 +81,7 @@ public class InstructionExecutor {
                 // MVP: Only accept non-empty, numeric input
                 valid = input != null && !input.trim().isEmpty();
                 // If the variable name is 'num' or similar, require a number
-                if (ai.getVariableName().toLowerCase().contains("num")) {
+                if (input != null && ai.getVariableName().toLowerCase().contains("num")) {
                     valid = valid && input.matches("-?\\d+");
                 }
                 if (!valid) {
@@ -102,6 +102,50 @@ public class InstructionExecutor {
             } catch (Exception e) {
                 for (Instruction instr : ai.getCatchBlock()) {
                     execute(instr);
+                }
+            }
+        } else if (instruction instanceof Parser.BlockInstruction) {
+            Parser.BlockInstruction block = (Parser.BlockInstruction) instruction;
+            for (Instruction instr : block.getBlock()) {
+                execute(instr);
+            }
+        } else if (instruction instanceof Parser.OtherwiseBlockInstruction) {
+            Parser.OtherwiseBlockInstruction block = (Parser.OtherwiseBlockInstruction) instruction;
+            for (Instruction instr : block.getBlock()) {
+                execute(instr);
+            }
+        } else if (instruction instanceof RepeatInstruction) {
+            RepeatInstruction ri = (RepeatInstruction) instruction;
+            int count = 0;
+            try {
+                Object resolved = resolver.resolve(ri.getCountExpr());
+                if (resolved instanceof Number) {
+                    count = ((Number) resolved).intValue();
+                } else {
+                    count = Integer.parseInt(resolved.toString());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid repeat count at line " + ri.getLineNumber());
+            }
+            if (count < 0) throw new RuntimeException("Repeat count must be non-negative (line " + ri.getLineNumber() + ")");
+            Object prevIndex = context.getVariable("_index");
+            for (int i = 0; i < count; i++) {
+                context.setVariable("_index", i);
+                for (Instruction instr : ri.getBody()) {
+                    execute(instr);
+                }
+            }
+            if (prevIndex != null) {
+                context.setVariable("_index", prevIndex);
+            } else {
+                // Remove _index if it was not previously set
+                try {
+                    java.lang.reflect.Method m = context.getClass().getDeclaredMethod("removeVariable", String.class);
+                    m.setAccessible(true);
+                    m.invoke(context, "_index");
+                } catch (Exception e) {
+                    // fallback: set to null
+                    context.setVariable("_index", null);
                 }
             }
         } else {

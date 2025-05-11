@@ -14,7 +14,7 @@ public class Parser {
     public List<Instruction> parse() {
         List<Instruction> instructions = new ArrayList<>();
         while (pos < tokens.size()) {
-            Instruction instr = parseInstructionWithBlocks();
+            Instruction instr = parseInstructionWithIndent();
             if (instr != null) {
                 instructions.add(instr);
             }
@@ -22,12 +22,46 @@ public class Parser {
         return instructions;
     }
 
-    // New method to support if ... then ... otherwise ... blocks by line
-    private Instruction parseInstructionWithBlocks() {
+    private Instruction parseInstructionWithIndent() {
         if (pos >= tokens.size()) return null;
         Tokenizer.Token token = tokens.get(pos);
         String value = token.value;
         int line = token.lineNumber;
+        if ("INDENT".equals(value)) {
+            pos++;
+            // Parse a block of instructions until DEDENT
+            List<Instruction> block = new ArrayList<>();
+            while (pos < tokens.size() && !peek("DEDENT")) {
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) block.add(instr);
+            }
+            if (peek("DEDENT")) pos++;
+            // Return a special BlockInstruction or flatten in parent
+            // For now, flatten: return null, parent will collect block
+            return new BlockInstruction(block, line);
+        }
+        if ("DEDENT".equals(value)) {
+            // Should be handled by block logic
+            pos++;
+            return null;
+        }
+        if ("otherwise".equals(value)) {
+            pos++;
+            // Otherwise block can be indented or single-line
+            List<Instruction> elseInstrs = new ArrayList<>();
+            if (peek("INDENT")) {
+                pos++;
+                while (pos < tokens.size() && !peek("DEDENT")) {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) elseInstrs.add(instr);
+                }
+                if (peek("DEDENT")) pos++;
+            } else {
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) elseInstrs.add(instr);
+            }
+            return new OtherwiseBlockInstruction(elseInstrs, line);
+        }
         if ("if".equals(value)) {
             pos++;
             StringBuilder cond = new StringBuilder();
@@ -36,25 +70,94 @@ public class Parser {
                 pos++;
             }
             if (peek("then")) pos++;
-            // Collect then-block: all instructions until 'otherwise' at start of a new line or end
             List<Instruction> thenInstrs = new ArrayList<>();
-            while (pos < tokens.size() && !(tokens.get(pos).value.equals("otherwise") && tokens.get(pos).lineNumber != line)) {
-                thenInstrs.add(parseInstructionWithBlocks());
-            }
-            // Collect else-block if 'otherwise' is present at start of a new line
-            List<Instruction> elseInstrs = new ArrayList<>();
-            if (pos < tokens.size() && tokens.get(pos).value.equals("otherwise") && tokens.get(pos).lineNumber != line) {
-                int otherwiseLine = tokens.get(pos).lineNumber;
+            if (peek("INDENT")) {
                 pos++;
-                while (pos < tokens.size() && tokens.get(pos).lineNumber != otherwiseLine) {
-                    elseInstrs.add(parseInstructionWithBlocks());
+                while (pos < tokens.size() && !peek("DEDENT") && !peek("otherwise")) {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) thenInstrs.add(instr);
                 }
-                // Also collect remaining instructions as else block
-                while (pos < tokens.size()) {
-                    elseInstrs.add(parseInstructionWithBlocks());
+                if (peek("DEDENT")) pos++;
+            } else {
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) thenInstrs.add(instr);
+            }
+            List<Instruction> elseInstrs = new ArrayList<>();
+            if (peek("otherwise")) {
+                pos++;
+                if (peek("INDENT")) {
+                    pos++;
+                    while (pos < tokens.size() && !peek("DEDENT")) {
+                        Instruction instr = parseInstructionWithIndent();
+                        if (instr != null) elseInstrs.add(instr);
+                    }
+                    if (peek("DEDENT")) pos++;
+                } else {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) elseInstrs.add(instr);
                 }
             }
             return new IfInstruction(cond.toString().trim(), thenInstrs, elseInstrs, line);
+        }
+        if ("attempt".equals(value)) {
+            pos++;
+            List<Instruction> tryBlock = new ArrayList<>();
+            List<Instruction> catchBlock = new ArrayList<>();
+            if (peek("INDENT")) {
+                pos++;
+                while (pos < tokens.size() && !peek("DEDENT") && !peek("if")) {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) tryBlock.add(instr);
+                }
+                if (peek("DEDENT")) pos++;
+            } else {
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) tryBlock.add(instr);
+            }
+            if (peek("if")) {
+                // 'if that fails' or similar fallback
+                pos++;
+                if (peek("that")) pos++;
+                if (peek("fails")) pos++;
+                if (peek("INDENT")) {
+                    pos++;
+                    while (pos < tokens.size() && !peek("DEDENT")) {
+                        Instruction instr = parseInstructionWithIndent();
+                        if (instr != null) catchBlock.add(instr);
+                    }
+                    if (peek("DEDENT")) pos++;
+                } else {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) catchBlock.add(instr);
+                }
+            }
+            return new AttemptInstruction(tryBlock, catchBlock, line);
+        }
+        if ("repeat".equals(value)) {
+            pos++;
+            // Parse count expression
+            StringBuilder countExpr = new StringBuilder();
+            while (pos < tokens.size() && !"times".equals(tokens.get(pos).value)) {
+                countExpr.append(tokens.get(pos).value).append(" ");
+                pos++;
+            }
+            if (!peek("times")) {
+                throw new RuntimeException("Syntax error at line " + line + ": Expected 'times' after repeat count");
+            }
+            pos++; // skip 'times'
+            List<Instruction> body = new ArrayList<>();
+            if (peek("INDENT")) {
+                pos++;
+                while (pos < tokens.size() && !peek("DEDENT")) {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) body.add(instr);
+                }
+                if (peek("DEDENT")) pos++;
+            } else {
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) body.add(instr);
+            }
+            return new RepeatInstruction(countExpr.toString().trim(), body, line);
         }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();
@@ -165,5 +268,27 @@ public class Parser {
         String val = tokens.get(pos).value;
         pos++;
         return val;
+    }
+
+    // Add BlockInstruction and OtherwiseBlockInstruction for block flattening
+    static class BlockInstruction implements Instruction {
+        private final List<Instruction> block;
+        private final int lineNumber;
+        BlockInstruction(List<Instruction> block, int lineNumber) {
+            this.block = block;
+            this.lineNumber = lineNumber;
+        }
+        public List<Instruction> getBlock() { return block; }
+        public int getLineNumber() { return lineNumber; }
+    }
+    static class OtherwiseBlockInstruction implements Instruction {
+        private final List<Instruction> block;
+        private final int lineNumber;
+        OtherwiseBlockInstruction(List<Instruction> block, int lineNumber) {
+            this.block = block;
+            this.lineNumber = lineNumber;
+        }
+        public List<Instruction> getBlock() { return block; }
+        public int getLineNumber() { return lineNumber; }
     }
 }
