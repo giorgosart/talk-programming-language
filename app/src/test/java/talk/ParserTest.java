@@ -123,4 +123,87 @@ public class ParserTest {
         assertEquals(1, repeat.getBody().size());
         assertTrue(repeat.getBody().get(0) instanceof WriteInstruction);
     }
+
+    @Test
+    void testIfWithAndOrLogic() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("if", 1),
+            new Tokenizer.Token("x is equal to 1", 1),
+            new Tokenizer.Token("AND", 1),
+            new Tokenizer.Token("y is equal to 2", 1),
+            new Tokenizer.Token("OR", 1),
+            new Tokenizer.Token("z is equal to 3", 1),
+            new Tokenizer.Token("then", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof IfInstruction);
+        String cond = ((IfInstruction) instructions.get(0)).getCondition();
+        assertTrue(cond.contains("AND"));
+        assertTrue(cond.contains("OR"));
+        assertTrue(cond.contains("x is equal to 1"));
+        assertTrue(cond.contains("y is equal to 2"));
+        assertTrue(cond.contains("z is equal to 3"));
+    }
+
+    @Test
+    void testIfWithNotPrefix() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("if", 1),
+            new Tokenizer.Token("NOT", 1),
+            new Tokenizer.Token("x is equal to 1", 1),
+            new Tokenizer.Token("then", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof IfInstruction);
+        String cond = ((IfInstruction) instructions.get(0)).getCondition();
+        assertTrue(cond.startsWith("NOT"));
+        assertTrue(cond.contains("x is equal to 1"));
+    }
+
+    @Test
+    void testMalformedIfCondition() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("if", 1),
+            new Tokenizer.Token("AND", 1), // Malformed: AND with no left operand
+            new Tokenizer.Token("then", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof IfInstruction);
+        String cond = ((IfInstruction) instructions.get(0)).getCondition();
+        // The parser does not throw, but the condition string will be malformed
+        assertTrue(cond.startsWith("AND"));
+    }
+
+    @Test
+    void testFunctionDefinitionAndCall() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("DEFINE", 1),
+            new Tokenizer.Token("myFunc", 1),
+            new Tokenizer.Token("INDENT", 2),
+            new Tokenizer.Token("write", 2),
+            new Tokenizer.Token("\"Hello\"", 2),
+            new Tokenizer.Token("in", 2),
+            new Tokenizer.Token("log.txt", 2),
+            new Tokenizer.Token("DEDENT", 3),
+            new Tokenizer.Token("CALL", 4),
+            new Tokenizer.Token("myFunc", 4)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(2, instructions.size());
+        assertTrue(instructions.get(0) instanceof FunctionDefinitionInstruction);
+        FunctionDefinitionInstruction def = (FunctionDefinitionInstruction) instructions.get(0);
+        assertEquals("myFunc", def.getFunctionName());
+        assertEquals(1, def.getBody().size());
+        assertTrue(def.getBody().get(0) instanceof WriteInstruction);
+        assertTrue(instructions.get(1) instanceof FunctionCallInstruction);
+        FunctionCallInstruction call = (FunctionCallInstruction) instructions.get(1);
+        assertEquals("myFunc", call.getFunctionName());
+    }
 }

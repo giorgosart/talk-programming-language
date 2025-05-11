@@ -71,4 +71,38 @@ public class TokenizerTest {
         }
         assertTrue(indentIdx > thenIdx);
     }
+
+    @Test
+    void testTokenizeLogicalOperators() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = Arrays.asList(
+            "if x is greater than 10 and y is less than 5 or not z then"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        boolean foundAnd = tokens.stream().anyMatch(t -> t.value.equals("AND"));
+        boolean foundOr = tokens.stream().anyMatch(t -> t.value.equals("OR"));
+        boolean foundNot = tokens.stream().anyMatch(t -> t.value.equals("NOT"));
+        assertTrue(foundAnd, "Should recognize 'and' as AND token");
+        assertTrue(foundOr, "Should recognize 'or' as OR token");
+        assertTrue(foundNot, "Should recognize 'not' as NOT token");
+        // Check order
+        int andIdx = -1, orIdx = -1, notIdx = -1;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i).value.equals("AND")) andIdx = i;
+            if (tokens.get(i).value.equals("OR")) orIdx = i;
+            if (tokens.get(i).value.equals("NOT")) notIdx = i;
+        }
+        assertTrue(andIdx > 0 && orIdx > andIdx && notIdx > orIdx);
+    }
+
+    @Test
+    void testTokenizeDefineAndCall() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = Arrays.asList("define myFunc", "call myFunc");
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        assertEquals("DEFINE", tokens.get(0).value);
+        assertEquals("myFunc", tokens.get(1).value);
+        assertEquals("CALL", tokens.get(2).value);
+        assertEquals("myFunc", tokens.get(3).value);
+    }
 }

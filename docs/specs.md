@@ -93,6 +93,47 @@ repeat for each item in items
 - Loop variables persist within the block but not globally.
 - Loops can be nested inside each other or inside if blocks.
 
+
+### 9. Logical Operators
+
+Logical operators extend conditional expressions:
+
+**Supported operators:**
+- `and`
+- `or`
+- `not`
+
+**Examples:**
+```plaintext
+if x is greater than 5 and y is equal to 3 then
+    write "Valid" in "result.txt"
+if not x is equal to 10 then
+    write "x is not 10" in "result.txt"
+```
+
+#### Rules:
+-Logical operators must be used with valid boolean expressions.
+-Operator precedence: not > and > or (left to right within the same precedence level).
+
+10. Functions
+Functions allow you to reuse a block of instructions:
+
+Definition Syntax:
+```
+define greeting
+    write "Hello" in "greeting.txt"
+```
+
+Call Syntax:
+```
+call greeting
+```
+
+#### Rules:
+- Functions must be defined before use.
+- Parameters are not supported in MVP (planned for future).
+- Function names must be unique and declared using define.
+
 ## 🧩 Core Components
 ### 1. Parser
 - Reads `.talk` files line-by-line

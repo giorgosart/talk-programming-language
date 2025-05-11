@@ -54,8 +54,17 @@ public class Tokenizer {
                     int end = idx;
                     while (end < line.length() && !Character.isWhitespace(line.charAt(end))) end++;
                     String part = line.substring(idx, end);
+                    // Recognize logical operators and function keywords as special tokens
+                    String tokenValue = switch (part) {
+                        case "and" -> "AND";
+                        case "or" -> "OR";
+                        case "not" -> "NOT";
+                        case "define" -> "DEFINE";
+                        case "call" -> "CALL";
+                        default -> part;
+                    };
                     System.out.println("[DEBUG] Raw part: '" + part + "'");
-                    tokens.add(new Token(part, i + 1));
+                    tokens.add(new Token(tokenValue, i + 1));
                     idx = end;
                 }
             }

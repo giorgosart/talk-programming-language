@@ -1,0 +1,20 @@
+# Integration test for functions in .talk
+variable x equal 0
+
+define set42
+    set x to 42
+
+define printHello
+    write "Hello from function!" in func.txt
+
+call set42
+call printHello
+
+# Nested function call
+define outer
+    call printHello
+    set x to 99
+call outer
+
+# Call before definition (should error if uncommented)
+# call notDefined

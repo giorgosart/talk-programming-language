@@ -64,6 +64,8 @@ public class Parser {
         }
         if ("if".equals(value)) {
             pos++;
+            // Parse the full logical condition, including chained 'and', 'or', and 'not' operators.
+            // The entire condition string is passed to ExpressionResolver, which builds the logic tree.
             StringBuilder cond = new StringBuilder();
             while (pos < tokens.size() && !"then".equals(tokens.get(pos).value)) {
                 cond.append(tokens.get(pos).value).append(" ");
@@ -158,6 +160,27 @@ public class Parser {
                 if (instr != null) body.add(instr);
             }
             return new RepeatInstruction(countExpr.toString().trim(), body, line);
+        }
+        if ("DEFINE".equals(value)) {
+            pos++;
+            String functionName = expectIdentifier();
+            List<Instruction> body = new ArrayList<>();
+            if (peek("INDENT")) {
+                pos++;
+                while (pos < tokens.size() && !peek("DEDENT")) {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) body.add(instr);
+                }
+                if (peek("DEDENT")) pos++;
+            } else {
+                throw new RuntimeException("Syntax error at line " + line + ": Function definition requires an indented block");
+            }
+            return new FunctionDefinitionInstruction(functionName, body, line);
+        }
+        if ("CALL".equals(value)) {
+            pos++;
+            String functionName = expectIdentifier();
+            return new FunctionCallInstruction(functionName, line);
         }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();

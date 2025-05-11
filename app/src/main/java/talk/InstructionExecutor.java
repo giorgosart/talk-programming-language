@@ -148,6 +148,23 @@ public class InstructionExecutor {
                     context.setVariable("_index", null);
                 }
             }
+        } else if (instruction instanceof FunctionDefinitionInstruction) {
+            FunctionDefinitionInstruction fdi = (FunctionDefinitionInstruction) instruction;
+            context.registerFunction(fdi.getFunctionName(), fdi);
+        } else if (instruction instanceof FunctionCallInstruction) {
+            FunctionCallInstruction fci = (FunctionCallInstruction) instruction;
+            if (!context.hasFunction(fci.getFunctionName())) {
+                throw new RuntimeException("Function '" + fci.getFunctionName() + "' is not defined (line " + fci.getLineNumber() + ")");
+            }
+            FunctionDefinitionInstruction def = context.getFunction(fci.getFunctionName());
+            context.pushScope();
+            try {
+                for (Instruction instr : def.getBody()) {
+                    execute(instr);
+                }
+            } finally {
+                context.popScope();
+            }
         } else {
             throw new UnsupportedOperationException("Instruction type not supported in this phase");
         }

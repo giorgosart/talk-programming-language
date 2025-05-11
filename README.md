@@ -57,6 +57,37 @@ A simple, English-like scripting language for automating tasks and learning prog
 ### 7. Comments
 - Any line starting with `#` is ignored.
 
+### 8. Logical Operators & Complex Conditions
+
+- Use `AND`, `OR`, `NOT` (case-insensitive) to combine conditions in `if` statements.
+- Parentheses for grouping are supported.
+
+#### Examples
+
+```talk
+variable x equal 1
+variable y equal 0
+variable z equal 1
+
+if x is equal to 1 AND y is equal to 1 then
+    write "both true" in logic.txt
+otherwise
+    write "at least one is false" in logic.txt
+
+if x is equal to 1 OR y is equal to 1 then
+    write "at least one is true" in logic.txt
+otherwise
+    write "both false" in logic.txt
+
+if NOT y is equal to 1 then
+    write "y is not 1" in logic.txt
+
+if x is equal to 1 AND (y is equal to 1 OR z is equal to 1) then
+    write "nested logic true" in logic.txt
+otherwise
+    write "nested logic false" in logic.txt
+```
+
 ---
 
 ## 📝 Examples

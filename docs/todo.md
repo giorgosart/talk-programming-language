@@ -170,76 +170,141 @@
 ### **9.0 Indentation Support**
 > Allow nesting of control flow using consistent indentation.
 
-- [ ] **9.1** Update Tokenizer to support indentation tracking (Dep: 2.1)  
-  - [ ] Count leading spaces on each line  
-  - [ ] Generate `INDENT` and `DEDENT` tokens  
-  - [ ] Track line indentation stack  
-  - [ ] Throw syntax error on inconsistent indentation
+- [x] **9.1** Update Tokenizer to support indentation tracking (Dep: 2.1)  
+  - [x] Count leading spaces on each line  
+  - [x] Generate `INDENT` and `DEDENT` tokens  
+  - [x] Track line indentation stack  
+  - [x] Throw syntax error on inconsistent indentation
 
-- [ ] **9.2** Update Parser to group blocks (Dep: 9.1)  
-  - [ ] Modify `IfInstruction`, `AttemptInstruction` to accept block children  
-  - [ ] Handle `INDENT` by entering recursive parse mode  
-  - [ ] Handle `DEDENT` by ending current block scope  
-  - [ ] Ensure `otherwise` matches the indentation of its parent `if`
+- [x] **9.2** Update Parser to group blocks (Dep: 9.1)  
+  - [x] Modify `IfInstruction`, `AttemptInstruction` to accept block children  
+  - [x] Handle `INDENT` by entering recursive parse mode  
+  - [x] Handle `DEDENT` by ending current block scope  
+  - [x] Ensure `otherwise` matches the indentation of its parent `if`
 
-- [ ] **9.3** Update Execution Engine (Dep: 9.2)  
-  - [ ] Execute instruction blocks recursively  
-  - [ ] Attach child blocks to parent instruction objects  
-  - [ ] Preserve runtime context and variable scope across nested blocks
+- [x] **9.3** Update Execution Engine (Dep: 9.2)  
+  - [x] Execute instruction blocks recursively  
+  - [x] Attach child blocks to parent instruction objects  
+  - [x] Preserve runtime context and variable scope across nested blocks
 
-- [ ] **9.4** Add Unit Tests for nested logic (Dep: 9.3)  
-  - [ ] Nested `if` inside `if`  
-  - [ ] `attempt` block with nested condition  
-  - [ ] Incorrect indentation edge cases
+- [x] **9.4** Add Unit Tests for nested logic (Dep: 9.3)  
+  - [x] Nested `if` inside `if`  
+  - [x] `attempt` block with nested condition  
+  - [x] Incorrect indentation edge cases
 
-- [ ] **9.5** Add Integration Tests for `.talk` scripts with indentation (Dep: 9.4)  
-  - [ ] Deep nesting (3+ levels)  
-  - [ ] Mixed blocks: `if` + `attempt`  
-  - [ ] Misaligned `otherwise` → error
+- [x] **9.5** Add Integration Tests for `.talk` scripts with indentation (Dep: 9.4)  
+  - [x] Deep nesting (3+ levels)  
+  - [x] Mixed blocks: `if` + `attempt`  
+  - [x] Misaligned `otherwise` → error
 
-- [ ] **9.6** Update README and Examples (Dep: 9.5)  
-  - [ ] Add example of nested `if`  
-  - [ ] Document indentation rules  
-  - [ ] Warn against mixing tabs and spaces
+- [x] **9.6** Update README and Examples (Dep: 9.5)  
+  - [x] Add example of nested `if`  
+  - [x] Document indentation rules  
+  - [x] Warn against mixing tabs and spaces
 
 ## 🔁 Phase 8: Looping Constructs
 
 ### **10.0 Add Support for `repeat` Loop**
 
-- [ ] **10.1** Update Tokenizer to recognize `repeat` and `times` keywords (Dep: 2.1)  
-  - [ ] Recognize `repeat <number> times` as a loop declaration  
-  - [ ] Track indentation tokens inside loop blocks  
-  - [ ] Store numeric literal for loop count
+- [x] **10.1** Update Tokenizer to recognize `repeat` and `times` keywords (Dep: 2.1)  
+  - [x] Recognize `repeat <number> times` as a loop declaration  
+  - [x] Track indentation tokens inside loop blocks  
+  - [x] Store numeric literal for loop count
 
-- [ ] **10.2** Define `RepeatInstruction` class (Dep: 3.1)  
-  - [ ] Hold `times` integer  
-  - [ ] Contain a list of instructions as the loop body  
-  - [ ] Expose implicit `_index` variable in each iteration
+- [x] **10.2** Define `RepeatInstruction` class (Dep: 3.1)  
+  - [x] Hold `times` integer  
+  - [x] Contain a list of instructions as the loop body  
+  - [x] Expose implicit `_index` variable in each iteration
 
-- [ ] **10.3** Update Parser to support `repeat ... times` blocks (Dep: 10.1, 10.2)  
-  - [ ] Parse line into a `RepeatInstruction`  
-  - [ ] Capture nested block instructions using indentation  
-  - [ ] Raise syntax errors for malformed loops (e.g., missing number, no block)
+- [x] **10.3** Update Parser to support `repeat ... times` blocks (Dep: 10.1, 10.2)  
+  - [x] Parse line into a `RepeatInstruction`  
+  - [x] Capture nested block instructions using indentation  
+  - [x] Raise syntax errors for malformed loops (e.g., missing number, no block)
 
-- [ ] **10.4** Update Runtime to execute `RepeatInstruction` (Dep: 10.3)  
-  - [ ] Evaluate loop count expression  
-  - [ ] Execute loop body `n` times  
-  - [ ] Inject `_index` as a local variable  
-  - [ ] Reset `_index` after loop
+- [x] **10.4** Update Runtime to execute `RepeatInstruction` (Dep: 10.3)  
+  - [x] Evaluate loop count expression  
+  - [x] Execute loop body `n` times  
+  - [x] Inject `_index` as a local variable  
+  - [x] Reset `_index` after loop
 
-- [ ] **10.5** Unit Tests (Dep: 10.4)  
-  - [ ] Loop runs exact number of times  
-  - [ ] `_index` is correct for each iteration  
-  - [ ] Nested loops work properly  
-  - [ ] Syntax errors: missing `times`, negative numbers, invalid block
+- [x] **10.5** Unit Tests (Dep: 10.4)  
+  - [x] Loop runs exact number of times  
+  - [x] `_index` is correct for each iteration  
+  - [x] Nested loops work properly  
+  - [x] Syntax errors: missing `times`, negative numbers, invalid block
 
-- [ ] **10.6** Integration Tests (Dep: 10.5)  
-  - [ ] `repeat 3 times` with simple write  
-  - [ ] Loop inside `if`, and vice versa  
-  - [ ] Loop with `attempt` block inside  
-  - [ ] `write _index` in output
+- [x] **10.6** Integration Tests (Dep: 10.5)  
+  - [x] `repeat 3 times` with simple write  
+  - [x] Loop inside `if`, and vice versa  
+  - [x] Loop with `attempt` block inside  
+  - [x] `write _index` in output
 
-- [ ] **10.7** Update README and Examples (Dep: 10.6)  
-  - [ ] Document loop syntax and `_index`  
-  - [ ] Add sample `.talk` script with loop  
-  - [ ] Mention future support for `while` and `for each`
+- [x] **10.7** Update README and Examples (Dep: 10.6)  
+  - [x] Document loop syntax and `_index`  
+  - [x] Add sample `.talk` script with loop  
+  - [x] Mention future support for `while` and `for each`
+
+## 🧠 Phase 9: Logical Operators
+
+### **11.0 Add Logical Operators to Conditions**
+
+- [x] **11.1** Update Tokenizer to recognize `and`, `or`, `not` (Dep: 2.1)  
+  - [x] Ensure these tokens are treated as part of expressions  
+
+- [x] **11.2** Update Expression Resolver to support logic trees (Dep: 4.3, 11.1)  
+  - [x] Build logical expression nodes (`AndNode`, `OrNode`, `NotNode`)  
+  - [x] Evaluate short-circuiting for `and`/`or`
+
+- [x] **11.3** Update Parser to handle chained conditions (Dep: 11.2)  
+  - [x] Nest conditions under `IfInstruction`  
+  - [x] Add support for `not` prefix handling
+
+- [x] **11.4** Unit Tests (Dep: 11.3)  
+  - [x] Combined `and`/`or` logic  
+  - [x] `not` usage  
+  - [x] Errors on malformed expressions
+
+- [x] **11.5** Integration Tests (Dep: 11.4)  
+  - [x] Complex `if` statements  
+  - [x] Nested logical blocks  
+  - [x] Combined with file conditions or user input
+
+- [x] **11.6** Update README with examples (Dep: 11.5)
+
+---
+
+## 🧠 Phase 10: Functions
+
+### **12.0 Add Support for Function Definition and Invocation**
+
+- [x] **12.1** Update Tokenizer to recognize `define` and `call` (Dep: 2.1)
+
+- [x] **12.2** Add `FunctionDefinitionInstruction` and `FunctionCallInstruction` (Dep: 3.1)  
+  - [x] Store block of instructions under a named function  
+  - [x] Allow invoking stored instructions later
+
+- [x] **12.3** Extend Parser to build function map (Dep: 12.2)  
+  - [x] Parse `define <name>` and capture indented block  
+  - [x] Add to function registry in the context  
+  - [x] Validate `call <name>` instructions
+
+- [x] **12.4** Update Runtime to support function call stack (Dep: 12.3)  
+  - [x] Lookup function definition  
+  - [x] Push and pop execution context
+
+- [x] **12.5** Unit Tests (Dep: 12.4)  
+  - [x] Define + call simple function  
+  - [x] Nested calls  
+  - [x] Call before definition → error
+
+- [x] **12.6** Integration Tests (Dep: 12.5)  
+  - [x] Scripts with multiple functions  
+  - [x] Function inside loop or if block  
+  - [x] Error for undefined function
+
+- [ ] **12.7** Update README and Examples (Dep: 12.6)  
+  - [ ] Syntax reference  
+  - [ ] Usage scenarios  
+  - [ ] Common mistakes
+
+➡️ **Next:** Update README and add example scripts to document function syntax, usage, and common mistakes.
