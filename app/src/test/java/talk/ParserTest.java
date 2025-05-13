@@ -5,9 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import talk.RepeatInstruction;
-
 public class ParserTest {
     @Test
     void testVariableDeclaration() {
@@ -205,5 +202,97 @@ public class ParserTest {
         assertTrue(instructions.get(1) instanceof FunctionCallInstruction);
         FunctionCallInstruction call = (FunctionCallInstruction) instructions.get(1);
         assertEquals("myFunc", call.getFunctionName());
+    }
+
+    @Test
+    void testAssignmentWithListValue() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = List.of(
+            "variable items equals apple, banana and cherry",
+            "set items to orange, lemon and lime"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(2, instructions.size());
+        assertTrue(instructions.get(0) instanceof VariableInstruction);
+        Object val = ((VariableInstruction) instructions.get(0)).getValue();
+        assertTrue(val instanceof ListValue);
+        ListValue list = (ListValue) val;
+        assertEquals(List.of("apple", "banana", "cherry"), list.getItems());
+        assertTrue(instructions.get(1) instanceof AssignmentInstruction);
+        Object val2 = ((AssignmentInstruction) instructions.get(1)).getValue();
+        assertTrue(val2 instanceof ListValue);
+        ListValue list2 = (ListValue) val2;
+        assertEquals(List.of("orange", "lemon", "lime"), list2.getItems());
+    }
+
+    @Test
+    void testRepeatForEachList() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = List.of(
+            "repeat for each fruit in fruits",
+            "    write fruit in log.txt"
+        );
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof RepeatInstruction);
+        RepeatInstruction ri = (RepeatInstruction) instructions.get(0);
+        assertEquals("fruit", ri.getItemVar());
+        assertEquals("fruits", ri.getListVar());
+        assertEquals(1, ri.getBody().size());
+        assertTrue(ri.getBody().get(0) instanceof WriteInstruction);
+    }
+
+    @Test
+    void testReadFileInstruction() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("read", 1),
+            new Tokenizer.Token("file", 1),
+            new Tokenizer.Token("data.txt", 1),
+            new Tokenizer.Token("into", 1),
+            new Tokenizer.Token("content", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof ReadFileInstruction);
+        ReadFileInstruction instr = (ReadFileInstruction) instructions.get(0);
+        assertEquals("data.txt", instr.getFileName());
+        assertEquals("content", instr.getVariableName());
+    }
+
+    @Test
+    void testAppendToFileInstruction() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("append", 1),
+            new Tokenizer.Token("hello world", 1), // Now expects unquoted value
+            new Tokenizer.Token("to", 1),
+            new Tokenizer.Token("log.txt", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof AppendToFileInstruction);
+        AppendToFileInstruction instr = (AppendToFileInstruction) instructions.get(0);
+        assertEquals("hello world", instr.getText());
+        assertEquals("log.txt", instr.getFileName());
+    }
+
+    @Test
+    void testDeleteFileInstruction() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("delete", 1),
+            new Tokenizer.Token("file", 1),
+            new Tokenizer.Token("temp.txt", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof DeleteFileInstruction);
+        DeleteFileInstruction instr = (DeleteFileInstruction) instructions.get(0);
+        assertEquals("temp.txt", instr.getFileName());
     }
 }

@@ -50,6 +50,33 @@ public class ExpressionResolver {
             LogicNode logicTree = parseLogic(expr);
             if (logicTree != null) return logicTree.eval();
         }
+        // List access: item N in items
+        if (expr.matches("item \\d+ in \\w+")) {
+            String[] parts = expr.split(" ");
+            int index = Integer.parseInt(parts[1]);
+            String listName = parts[3];
+            Object listObj = context.getVariable(listName);
+            if (!(listObj instanceof ListValue)) {
+                throw new RuntimeException("Variable '" + listName + "' is not a list");
+            }
+            ListValue list = (ListValue) listObj;
+            if (index < 1 || index > list.size()) {
+                throw new RuntimeException("Index " + index + " out of bounds for list '" + listName + "'");
+            }
+            return list.get(index);
+        }
+        // List includes: items includes apple
+        if (expr.matches("\\w+ includes .+")) {
+            int idx = expr.indexOf(" includes ");
+            String listName = expr.substring(0, idx).trim();
+            String value = expr.substring(idx + 10).trim();
+            Object listObj = context.getVariable(listName);
+            if (!(listObj instanceof ListValue)) {
+                throw new RuntimeException("Variable '" + listName + "' is not a list");
+            }
+            ListValue list = (ListValue) listObj;
+            return list.includes(value.replaceAll("^\"|\"$", "")); // remove quotes if present
+        }
         // Try to resolve as integer
         if (expr.matches("-?\\d+")) {
             return Integer.parseInt(expr);

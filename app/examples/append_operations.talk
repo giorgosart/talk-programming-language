@@ -1,0 +1,7 @@
+# File append example
+create file as "append.txt"
+write "first" in append.txt
+append "second" to append.txt
+append "third" to append.txt
+read file append.txt into result
+write result in output.txt

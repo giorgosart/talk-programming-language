@@ -1,0 +1,11 @@
+# Nested Loops and Conditionals Example
+
+variable numbers equals 1, 2, 3
+variable letters equals A, B
+
+repeat for each number in numbers
+    repeat for each letter in letters
+        if number is equal to 2 AND letter is equal to B then
+            write number and letter and "special!" in "nested.txt"
+        otherwise
+            write number and letter in "nested.txt"

@@ -38,4 +38,29 @@ public class ExpressionResolverTest {
         // If left of OR is true, right is not evaluated (should not throw)
         assertDoesNotThrow(() -> r.resolve("x is equal to 1 OR not_a_var is equal to 1"));
     }
+
+    @Test
+    void testListAccessExpression() {
+        RuntimeContext ctx = new RuntimeContext();
+        ctx.setVariable("items", new ListValue(java.util.List.of("apple", "banana", "cherry")));
+        ExpressionResolver resolver = new ExpressionResolver(ctx);
+        assertEquals("banana", resolver.resolve("item 2 in items"));
+        assertEquals("apple", resolver.resolve("item 1 in items"));
+        assertEquals("cherry", resolver.resolve("item 3 in items"));
+        Exception ex = assertThrows(RuntimeException.class, () -> resolver.resolve("item 4 in items"));
+        assertTrue(ex.getMessage().contains("out of bounds"));
+    }
+
+    @Test
+    void testListIncludesExpression() {
+        RuntimeContext ctx = new RuntimeContext();
+        ctx.setVariable("fruits", new ListValue(java.util.List.of("apple", "banana", "cherry")));
+        ExpressionResolver resolver = new ExpressionResolver(ctx);
+        assertTrue((Boolean)resolver.resolve("fruits includes apple"));
+        assertTrue((Boolean)resolver.resolve("fruits includes \"banana\""));
+        assertFalse((Boolean)resolver.resolve("fruits includes orange"));
+        ctx.setVariable("notalist", "notalist");
+        Exception ex = assertThrows(RuntimeException.class, () -> resolver.resolve("notalist includes apple"));
+        assertTrue(ex.getMessage().contains("not a list"));
+    }
 }

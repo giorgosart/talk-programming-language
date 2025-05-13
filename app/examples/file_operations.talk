@@ -1,3 +1,5 @@
 # File operations example
 create file as "data.txt"
 write "42" in data.txt
+read file data.txt into result
+write result in output.txt

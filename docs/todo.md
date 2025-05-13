@@ -302,9 +302,94 @@
   - [x] Function inside loop or if block  
   - [x] Error for undefined function
 
-- [ ] **12.7** Update README and Examples (Dep: 12.6)  
-  - [ ] Syntax reference  
-  - [ ] Usage scenarios  
-  - [ ] Common mistakes
+- [x] **12.7** Update README and Examples (Dep: 12.6)  
+  - [x] Syntax reference  
+  - [x] Usage scenarios  
+  - [x] Common mistakes
 
-➡️ **Next:** Update README and add example scripts to document function syntax, usage, and common mistakes.
+## 🧠 Phase 11: List Support
+
+### **13.0 Implement List Features**
+
+- [x] **13.1** Update Tokenizer to support list syntax (Dep: 2.1)  
+  - [x] Parse statements like `variable items equals apple, banana and cherry`  
+  - [x] Tokenize comma-and separated words as a list literal  
+  - [x] Preserve quoted multi-word values
+
+- [x] **13.2** Add `ListValue` class (Dep: 4.1)  
+  - [x] Extend `Value` interface  
+  - [x] Store items as string list  
+  - [x] Provide `get(index)`, `size()`, and `includes()` methods
+
+- [x] **13.3** Update `AssignmentInstruction` to support list values (Dep: 13.1, 13.2)  
+  - [x] Recognize list-style variable initialization  
+  - [x] Assign `ListValue` to variable context
+
+- [x] **13.4** Add expression support for list access (Dep: 13.2)  
+  - [x] Syntax: `item 1 in items`  
+  - [x] Parse as expression node with list and index  
+  - [x] Validate 1-based index is within bounds
+
+- [x] **13.5** Add `includes` condition to expression evaluator (Dep: 4.3, 13.2)  
+  - [x] Handle `if items includes apple`  
+  - [x] Validate type is a list  
+  - [x] Return boolean result
+
+- [x] **13.6** Update `RepeatInstruction` to support list iteration (Dep: 10.3, 13.2)  
+  - [x] Parse `repeat for each item in items`  
+  - [x] Loop through list contents  
+  - [x] Inject named loop variable (e.g., `item`)
+
+- [x] **13.7** Expose `position` keyword during iteration (Dep: 13.6)  
+  - [x] Automatically define `position` inside loop scope  
+  - [x] Value starts at 1 and increments per iteration  
+  - [x] Disallow reassignment of `position`
+
+- [x] **13.8** Unit Tests (Dep: 13.7)  
+  - [x] List assignment and resolution  
+  - [x] `item N in list` access  
+  - [x] `includes` checks  
+  - [x] `position` accuracy inside loops
+
+- [x] **13.9** Integration Tests (Dep: 13.8)  
+  - [x] Declare list + access by index  
+  - [x] Loop over list with `position`  
+  - [x] Write indexed output to file  
+  - [x] Use membership test in `if` condition
+
+- [x] **13.10** Update README and Examples (Dep: 13.9)  
+  - [x] Document list declaration  
+  - [x] Explain `position` keyword  
+  - [x] Provide examples with loops and indexing
+
+## 💾 Phase 12: Enhanced File and Logging Operations
+
+### **14.0 File Reading**
+- [x] **14.1** Update Tokenizer to recognize `read file <file> into <variable>` (Dep: 2.1)
+- [x] **14.2** Add `ReadFileInstruction` class (Dep: 3.1)
+- [x] **14.3** Implement runtime logic to read file content and assign to variable (Dep: 14.2)
+- [x] **14.4** Unit and integration tests (Dep: 14.3)
+
+### **15.0 File Appending**
+- [x] **15.1** Update Tokenizer to recognize `append <text> to <file>` (Dep: 2.1)
+- [x] **15.2** Add `AppendToFileInstruction` class (Dep: 3.1)
+- [x] **15.3** Implement logic to append to file (Dep: 15.2)
+- [x] **15.4** Unit and integration tests (Dep: 15.3)
+
+### **16.0 File Deletion**
+- [ ] **16.1** Update Tokenizer to recognize `delete file <file>` (Dep: 2.1)
+- [ ] **16.2** Add `DeleteFileInstruction` class (Dep: 3.1)
+- [ ] **16.3** Implement logic to delete file (Dep: 16.2)
+- [ ] **16.4** Unit and integration tests (Dep: 16.3)
+
+### **17.0 Directory Listing**
+- [ ] **17.1** Update Tokenizer to recognize `list files in <directory> into <variable>` (Dep: 2.1)
+- [ ] **17.2** Add `ListDirectoryInstruction` class (Dep: 3.1)
+- [ ] **17.3** Implement logic to fetch file names from a directory and assign as list (Dep: 17.2)
+- [ ] **17.4** Unit and integration tests (Dep: 17.3)
+
+### **18.0 Logging**
+- [ ] **18.1** Update Tokenizer to recognize `log <message>` (Dep: 2.1)
+- [ ] **18.2** Add `LogInstruction` class (Dep: 3.1)
+- [ ] **18.3** Implement logic to write logs to a default log file (Dep: 18.2)
+- [ ] **18.4** Unit and integration tests (Dep: 18.3)

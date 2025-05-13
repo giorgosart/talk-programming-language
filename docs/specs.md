@@ -128,11 +128,93 @@ Call Syntax:
 ```
 call greeting
 ```
-
 #### Rules:
 - Functions must be defined before use.
 - Parameters are not supported in MVP (planned for future).
 - Function names must be unique and declared using define.
+
+### 11. Lists
+
+Lists allow users to store multiple values in a single variable and work with them through indexing, looping, and membership tests.
+
+#### 1. Declaring a List
+```plaintext
+variable items equals apple, banana and cherry
+```
+
+- Creates a list variable items with the given values.
+- List values are automatically treated as strings.
+- Use and or comma and to separate items.
+- Values with spaces must be quoted (e.g., "green apple").
+
+#### 2. Accessing a List Item
+```
+set x to item 1 in items
+```
+- Uses 1-based indexing: item 1 refers to the first item.
+- Future versions may support: first item, last item.
+
+#### 3. Looping Over a List
+```
+repeat for each item in items
+    write position and item in "log.txt"
+```
+- Iterates through each item in the list.
+- The loop variable (item above) is available inside the block.
+- The current index is exposed as `position` (starting from 1).
+- `position` is read-only and only exists inside the loop.
+
+#### 4. Membership Checks
+```
+if items includes apple then
+    write "Found it!" in "log.txt"
+```
+- Returns true if the list contains the given value.
+- Only the list includes value form is supported in MVP.
+
+#### Notes:
+- Lists cannot be modified in MVP (no append/remove).
+- No nested lists or dictionaries.
+- Values must be quoted if they contain multiple words.
+
+### 12. Enhanced File and Logging Operations
+
+These features extend file I/O beyond writing and creation.
+
+#### 1. Reading a File
+```plaintext
+read file report.txt into content
+```
+- Reads the contents of `report.txt` into the variable `content`
+- Content is stored as a single string (newline characters preserved)
+
+#### 2. Appending to a File
+```plaintext
+append "Hello again" to report.txt
+```
+- Adds the specified text to the end of the file
+- Creates the file if it doesn’t exist
+
+#### 3. Deleting a File
+```plaintext
+delete file report.txt
+```
+- Deletes the file if it exists
+- Throws an error if the file is missing (unless in `attempt`)
+
+#### 4. Listing Files in a Directory
+```plaintext
+list files in "data" into filenames
+```
+- Stores a list of filenames from the directory `data` into variable `filenames`
+
+#### 5. Logging
+```plaintext
+log "System started"
+```
+- Writes the message to a default log file (e.g., `talk.log`)
+- Optionally extended later: `log "message" to "filename.log"`
+
 
 ## 🧩 Core Components
 ### 1. Parser

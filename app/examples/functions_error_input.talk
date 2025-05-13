@@ -1,0 +1,16 @@
+create file as "greet.txt"
+# Functions, Error Handling, and Input Example
+
+define greet
+    ask "What is your name?" and store in name
+    write "Hello, " in greet.txt
+    write name in greet.txt
+
+call greet
+
+attempt
+    ask "Enter a number:" and store in num
+    set num2 to num + 1
+    write num in greet.txt
+if that fails
+    write "Invalid input!" in greet.txt

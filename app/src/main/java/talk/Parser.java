@@ -2,6 +2,10 @@ package talk;
 
 import java.util.ArrayList;
 import java.util.List;
+import talk.ReadFileInstruction;
+import talk.AppendToFileInstruction;
+import talk.DeleteFileInstruction;
+import talk.LogInstruction;
 
 public class Parser {
     private final List<Tokenizer.Token> tokens;
@@ -137,7 +141,28 @@ public class Parser {
         }
         if ("repeat".equals(value)) {
             pos++;
-            // Parse count expression
+            // Check for list iteration: repeat for each item in items
+            if (peek("for")) {
+                pos++;
+                expect("each");
+                String itemVar = expectIdentifier();
+                expect("in");
+                String listVar = expectIdentifier();
+                List<Instruction> body = new ArrayList<>();
+                if (peek("INDENT")) {
+                    pos++;
+                    while (pos < tokens.size() && !peek("DEDENT")) {
+                        Instruction instr = parseInstructionWithIndent();
+                        if (instr != null) body.add(instr);
+                    }
+                    if (peek("DEDENT")) pos++;
+                } else {
+                    Instruction instr = parseInstructionWithIndent();
+                    if (instr != null) body.add(instr);
+                }
+                return new RepeatInstruction(itemVar, listVar, body, line);
+            }
+            // Parse count expression (repeat N times)
             StringBuilder countExpr = new StringBuilder();
             while (pos < tokens.size() && !"times".equals(tokens.get(pos).value)) {
                 countExpr.append(tokens.get(pos).value).append(" ");
@@ -195,10 +220,21 @@ public class Parser {
         if ("variable".equals(value)) {
             pos++;
             String name = expectIdentifier();
-            if (peek("equal")) {
+            if (peek("equal") || peek("equals")) {
                 pos++;
-                String val = expectValue();
-                return new VariableInstruction(name, val, line);
+                // Check for list literal
+                if (peek("LIST_START")) {
+                    pos++;
+                    List<String> items = new ArrayList<>();
+                    while (!peek("LIST_END")) {
+                        items.add(expectValue());
+                    }
+                    expect("LIST_END");
+                    return new VariableInstruction(name, new ListValue(items), line);
+                } else {
+                    String val = expectValue();
+                    return new VariableInstruction(name, val, line);
+                }
             }
             return new VariableInstruction(name, null, line);
         }
@@ -207,8 +243,19 @@ public class Parser {
             pos++;
             String name = expectIdentifier();
             expect("to");
-            String val = expectValue();
-            return new AssignmentInstruction(name, val, line);
+            // Check for list literal
+            if (peek("LIST_START")) {
+                pos++;
+                List<String> items = new ArrayList<>();
+                while (!peek("LIST_END")) {
+                    items.add(expectValue());
+                }
+                expect("LIST_END");
+                return new AssignmentInstruction(name, new ListValue(items), line);
+            } else {
+                String val = expectValue();
+                return new AssignmentInstruction(name, val, line);
+            }
         }
         // If: if x is greater than 10 then ... otherwise ...
         if ("if".equals(value)) {
@@ -261,11 +308,51 @@ public class Parser {
             String file = expectValue();
             return new CreateFileInstruction(file, line);
         }
+        // Read file: read file <file> into <variable>
+        if ("read".equals(value) && peekNext("file")) {
+            pos++; // read
+            pos++; // file
+            String fileName = expectValue();
+            expect("into");
+            String variableName = expectIdentifier();
+            return new ReadFileInstruction(fileName, variableName, line);
+        }
+        // Append to file: append <text> to <file>
+        if ("append".equals(value)) {
+            pos++;
+            String text = expectValue();
+            expect("to");
+            String fileName = expectIdentifier();
+            return new AppendToFileInstruction(text, fileName, line);
+        }
+        // Delete file: delete file <file>
+        if ("delete".equals(value) && peekNext("file")) {
+            pos++; // delete
+            pos++; // file
+            String fileName = expectValue();
+            return new DeleteFileInstruction(fileName, line);
+        }
+        // List files in directory: list files in <directory> into <variable>
+        if ("list".equals(value) && peekNext("files")) {
+            pos++; // list
+            pos++; // files
+            expect("in");
+            String directory = expectValue();
+            expect("into");
+            String variableName = expectIdentifier();
+            return new ListDirectoryInstruction(directory, variableName, line);
+        }
         // Attempt: attempt ... if that fails ...
         if ("attempt".equals(value)) {
             pos++;
             // For MVP, no block parsing, just stub
             return new AttemptInstruction(new ArrayList<>(), new ArrayList<>(), line);
+        }
+        // Logging: log <message>
+        if ("log".equals(value)) {
+            pos++;
+            String message = expectValue();
+            return new LogInstruction(message, line);
         }
         throw new RuntimeException("Syntax error at line " + line + ": Unknown instruction '" + value + "'");
     }
@@ -273,6 +360,12 @@ public class Parser {
     private boolean peek(String expected) {
         return pos < tokens.size() && tokens.get(pos).value.equals(expected);
     }
+
+    // Utility: peek next token value
+    private boolean peekNext(String expected) {
+        return (pos + 1) < tokens.size() && tokens.get(pos + 1).value.equals(expected);
+    }
+
     private void expect(String expected) {
         if (!peek(expected)) {
             int line = pos < tokens.size() ? tokens.get(pos).lineNumber : -1;

@@ -1,0 +1,6 @@
+42
+
+first
+second
+third
+

@@ -1,0 +1,16 @@
+# Complex Logic and File Operations Example
+
+create file as "results.txt"
+variable x equal 5
+variable y equal 10
+
+if x is greater than 3 AND y is smaller than 20 OR x is equal to 5 then
+    write "Complex logic true" in results.txt
+otherwise
+    write "Complex logic false" in results.txt
+
+repeat 3 times
+    write _index in results.txt
+
+if file results.txt is not empty then
+    write "File has content" in results.txt

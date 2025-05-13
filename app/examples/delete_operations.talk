@@ -1,0 +1,4 @@
+# File delete example
+create file as "delete_me.txt"
+write "bye" in delete_me.txt
+delete file delete_me.txt

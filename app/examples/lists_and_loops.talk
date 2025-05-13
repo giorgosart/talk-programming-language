@@ -1,0 +1,11 @@
+# List Iteration and Membership Example
+
+variable fruits equals apple, banana, "green apple", cherry
+
+repeat for each fruit in fruits
+    write position and fruit in "fruits.txt"
+
+if fruits includes "green apple" then
+    write "Green apple found!" in "fruits.txt"
+otherwise
+    write "No green apple." in "fruits.txt"
