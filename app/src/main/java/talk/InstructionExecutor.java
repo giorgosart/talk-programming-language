@@ -9,15 +9,32 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 import talk.LogInstruction;
+import talk.CopyFileInstruction;
 
 public class InstructionExecutor {
     private final RuntimeContext context;
     private final ExpressionResolver resolver;
     private static final Scanner scanner = new java.util.Scanner(System.in);
 
+    // Custom exception to signal early return from a function
+    public static class FunctionReturn extends RuntimeException {
+        private final Object value;
+        public FunctionReturn(Object value) { this.value = value; }
+        public Object getValue() { return value; }
+    }
+
     public InstructionExecutor(RuntimeContext context) {
         this.context = context;
         this.resolver = new ExpressionResolver(context);
+    }
+
+    public Object executeWithReturn(Instruction instruction) {
+        try {
+            execute(instruction);
+            return null;
+        } catch (FunctionReturn fr) {
+            return fr.getValue();
+        }
     }
 
     public void execute(Instruction instruction) {
@@ -29,10 +46,17 @@ public class InstructionExecutor {
             context.setVariable(vi.getName(), vi.getValue());
         } else if (instruction instanceof AssignmentInstruction) {
             AssignmentInstruction ai = (AssignmentInstruction) instruction;
+            // Only auto-declare in function/local scope (not global)
+            boolean isLocalScope = context.isLocalScope();
             if (!context.hasVariable(ai.getVariableName())) {
-                throw new RuntimeException("Variable '" + ai.getVariableName() + "' not declared (line " + ai.getLineNumber() + ")");
+                if (isLocalScope) {
+                    context.setVariable(ai.getVariableName(), ai.getValue());
+                } else {
+                    throw new RuntimeException("Variable '" + ai.getVariableName() + "' not declared (line " + ai.getLineNumber() + ")");
+                }
+            } else {
+                context.setVariable(ai.getVariableName(), ai.getValue());
             }
-            context.setVariable(ai.getVariableName(), ai.getValue());
         } else if (instruction instanceof IfInstruction) {
             IfInstruction ii = (IfInstruction) instruction;
             Object condResult = resolver.resolve(ii.getCondition());
@@ -201,14 +225,40 @@ public class InstructionExecutor {
                 throw new RuntimeException("Function '" + fci.getFunctionName() + "' is not defined (line " + fci.getLineNumber() + ")");
             }
             FunctionDefinitionInstruction def = context.getFunction(fci.getFunctionName());
+            List<String> params = def.getParameters();
+            List<String> args = fci.getArguments();
+            if (params.size() != args.size()) {
+                throw new RuntimeException("Function '" + fci.getFunctionName() + "' expects " + params.size() + " arguments but got " + args.size() + " (line " + fci.getLineNumber() + ")");
+            }
             context.pushScope();
             try {
-                for (Instruction instr : def.getBody()) {
-                    execute(instr);
+                for (int i = 0; i < params.size(); i++) {
+                    context.setVariable(params.get(i), resolver.resolve(args.get(i)));
+                }
+                Object returnValue = null;
+                try {
+                    for (Instruction instr : def.getBody()) {
+                        execute(instr);
+                    }
+                } catch (FunctionReturn fr) {
+                    returnValue = fr.getValue();
+                }
+                // If 'into' is specified, assign return value to variable in caller's scope
+                if (fci.getIntoVariable() != null) {
+                    context.popScope(); // pop function scope to assign in caller's scope
+                    context.setVariable(fci.getIntoVariable(), returnValue);
+                    context.pushScope(); // restore function scope for finally
+                } else if (returnValue != null) {
+                    // If not captured, propagate return for executeWithReturn
+                    throw new FunctionReturn(returnValue);
                 }
             } finally {
                 context.popScope();
             }
+        } else if (instruction instanceof ReturnInstruction) {
+            ReturnInstruction ri = (ReturnInstruction) instruction;
+            Object value = resolver.resolve(ri.getExpression());
+            throw new FunctionReturn(value);
         } else if (instruction instanceof ReadFileInstruction) {
             ReadFileInstruction rfi = (ReadFileInstruction) instruction;
             String fileName = rfi.getFileName();
@@ -269,6 +319,15 @@ public class InstructionExecutor {
                 writer.write(System.lineSeparator());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write to log file '" + logFile + "' (line " + li.getLineNumber() + ")", e);
+            }
+        } else if (instruction instanceof CopyFileInstruction) {
+            CopyFileInstruction cfi = (CopyFileInstruction) instruction;
+            java.nio.file.Path src = java.nio.file.Paths.get(cfi.getSource());
+            java.nio.file.Path dest = java.nio.file.Paths.get(cfi.getDestination());
+            try {
+                java.nio.file.Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to copy file from '" + cfi.getSource() + "' to '" + cfi.getDestination() + "' (line " + cfi.getLineNumber() + ")");
             }
         } else {
             throw new UnsupportedOperationException("Instruction type not supported in this phase");

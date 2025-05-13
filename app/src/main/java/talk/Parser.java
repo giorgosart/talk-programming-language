@@ -6,6 +6,7 @@ import talk.ReadFileInstruction;
 import talk.AppendToFileInstruction;
 import talk.DeleteFileInstruction;
 import talk.LogInstruction;
+import talk.CopyFileInstruction;
 
 public class Parser {
     private final List<Tokenizer.Token> tokens;
@@ -189,6 +190,18 @@ public class Parser {
         if ("DEFINE".equals(value)) {
             pos++;
             String functionName = expectIdentifier();
+            // Parse parameter names (all identifiers until INDENT)
+            List<String> parameters = new ArrayList<>();
+            while (pos < tokens.size() && !peek("INDENT") && !peek("DEDENT") && !peek("NEWLINE")) {
+                Tokenizer.Token paramToken = tokens.get(pos);
+                // Only accept identifiers (not keywords or symbols)
+                if (paramToken.value.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                    parameters.add(paramToken.value);
+                    pos++;
+                } else {
+                    break;
+                }
+            }
             List<Instruction> body = new ArrayList<>();
             if (peek("INDENT")) {
                 pos++;
@@ -200,12 +213,46 @@ public class Parser {
             } else {
                 throw new RuntimeException("Syntax error at line " + line + ": Function definition requires an indented block");
             }
-            return new FunctionDefinitionInstruction(functionName, body, line);
+            return new FunctionDefinitionInstruction(functionName, parameters, body, line);
         }
-        if ("CALL".equals(value)) {
+        if ("call".equalsIgnoreCase(value)) {
             pos++;
             String functionName = expectIdentifier();
-            return new FunctionCallInstruction(functionName, line);
+            List<String> arguments = new ArrayList<>();
+            if (peek("with")) {
+                pos++;
+                // Parse arguments (all values until INDENT, DEDENT, NEWLINE, or 'into')
+                while (pos < tokens.size() && !peek("INDENT") && !peek("DEDENT") && !peek("NEWLINE") && !peek("into")) {
+                    Tokenizer.Token argToken = tokens.get(pos);
+                    // Accept identifiers, numbers, or quoted strings as arguments
+                    if (argToken.value.matches("[a-zA-Z_][a-zA-Z0-9_]*") || argToken.value.matches("\".*\"") || argToken.value.matches("-?\\d+(\\.\\d+)?")) {
+                        arguments.add(argToken.value);
+                        pos++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            String intoVariable = null;
+            if (peek("into")) {
+                pos++;
+                if (pos < tokens.size() && tokens.get(pos).value.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                    intoVariable = tokens.get(pos).value;
+                    pos++;
+                } else {
+                    throw new RuntimeException("Syntax error at line " + line + ": Expected variable name after 'into'");
+                }
+            }
+            return new FunctionCallInstruction(functionName, arguments, intoVariable, line);
+        }
+        if ("return".equals(value)) {
+            pos++;
+            String expr = "";
+            if (pos < tokens.size() && !tokens.get(pos).value.equals("INDENT") && !tokens.get(pos).value.equals("DEDENT") && !tokens.get(pos).value.equals("NEWLINE")) {
+                expr = tokens.get(pos).value;
+                pos++;
+            }
+            return new ReturnInstruction(expr, line);
         }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();
@@ -353,6 +400,24 @@ public class Parser {
             pos++;
             String message = expectValue();
             return new LogInstruction(message, line);
+        }
+        // File copying: copy file <source> to <destination>
+        if ("copy".equals(value) && peekNext("file")) {
+            pos++; // copy
+            pos++; // file
+            String source = expectValue();
+            expect("to");
+            String destination = expectValue();
+            return new CopyFileInstruction(source, destination, line);
+        }
+        if ("return".equals(value)) {
+            pos++;
+            String expr = "";
+            if (pos < tokens.size() && !tokens.get(pos).value.equals("INDENT") && !tokens.get(pos).value.equals("DEDENT") && !tokens.get(pos).value.equals("NEWLINE")) {
+                expr = tokens.get(pos).value;
+                pos++;
+            }
+            return new ReturnInstruction(expr, line);
         }
         throw new RuntimeException("Syntax error at line " + line + ": Unknown instruction '" + value + "'");
     }

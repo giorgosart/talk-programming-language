@@ -184,4 +184,26 @@ public class TokenizerTest {
         assertEquals("file", tokens.get(1).value);
         assertEquals("temp.txt", tokens.get(2).value);
     }
+
+    @Test
+    void testTokenizeParameterizedFunctionDefinition() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = List.of("define myfunc x y z");
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        assertEquals("DEFINE", tokens.get(0).value);
+        assertEquals("myfunc", tokens.get(1).value);
+        assertEquals("x", tokens.get(2).value);
+        assertEquals("y", tokens.get(3).value);
+        assertEquals("z", tokens.get(4).value);
+        assertEquals(5, tokens.size());
+    }
+
+    @Test
+    void testTokenizeReturnStatement() {
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> lines = List.of("return x + 1");
+        List<Tokenizer.Token> tokens = tokenizer.tokenize(lines);
+        assertEquals("return", tokens.get(0).value);
+        assertEquals("x + 1", tokens.get(1).value);
+    }
 }

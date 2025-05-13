@@ -102,41 +102,64 @@ otherwise
 
 ### 9. Functions
 
-- Define a function:
+- Define a function (with or without parameters):
 
   ```talk
-  define <function_name>
+  define <function_name> [param1 param2 ...]
       # instructions (indented)
   ```
 
-- Call a function:
+- Call a function (with or without arguments):
 
   ```talk
-  call <function_name>
+  call <function_name> [with arg1 arg2 ...] [into resultVar]
+  ```
+
+- Return a value from a function:
+
+  ```talk
+  return <expression>
+  ```
+
+- Capture a function's return value:
+
+  ```talk
+  call <function_name> with 1 2 into result
   ```
 
 - Functions must be defined before they are called.
 - Function names must be unique (no duplicates).
-- Parameters are not supported in this version.
+- Arguments are matched to parameters by position.
+- Use `return` to exit a function early and provide a value.
+- Use `into <variable>` to store a function's return value.
 
-#### Example
+#### Function Examples
 
 ```talk
 variable x equal 0
+variable result
 
-define set42
-    set x to 42
+define add a b
+    return a + b
 
-define printHello
-    write "Hello from function!" in func.txt
+define doubleAndAdd x y
+    call add with x y into result
+    return result * 2
 
-call set42
-call printHello
+call doubleAndAdd with 2 3 into x
+write x in output.txt
 
-define outer
-    call printHello
-    set x to 99
-call outer
+# Early return
+
+define testEarlyReturn
+    set x to 1
+    return 42
+    set x to 2  # This will not run
+call testEarlyReturn into result
+write result in output.txt
+
+# Argument mismatch (will error)
+# call add with 1
 ```
 
 #### Common Mistakes

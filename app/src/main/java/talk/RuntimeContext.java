@@ -72,4 +72,9 @@ public class RuntimeContext {
     public void stop() {
         this.running = false;
     }
+
+    // Returns true if currently in a local (non-global) scope
+    public boolean isLocalScope() {
+        return variableStack.size() > 1;
+    }
 }

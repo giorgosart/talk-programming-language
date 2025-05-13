@@ -1,0 +1,24 @@
+# Integration test for function return values and nested calls
+variable result
+variable temp
+
+define add a b
+    return a + b
+
+define doubleAndAdd x y
+    call add with x y into temp
+    return temp * 2
+
+define nested
+    call doubleAndAdd with 2 3 into result
+    write result in output.txt
+    return result
+
+call nested into result
+write result in output.txt
+
+# Test reassignment of return value
+call add with 10 20 into result
+write result in output.txt
+set result to 999
+write result in output.txt

@@ -295,4 +295,82 @@ public class ParserTest {
         DeleteFileInstruction instr = (DeleteFileInstruction) instructions.get(0);
         assertEquals("temp.txt", instr.getFileName());
     }
+
+    @Test
+    void testParameterizedFunctionDefinition() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("DEFINE", 1),
+            new Tokenizer.Token("sum", 1),
+            new Tokenizer.Token("a", 1),
+            new Tokenizer.Token("b", 1),
+            new Tokenizer.Token("INDENT", 2),
+            new Tokenizer.Token("set", 2),
+            new Tokenizer.Token("result", 2),
+            new Tokenizer.Token("to", 2),
+            new Tokenizer.Token("a + b", 2),
+            new Tokenizer.Token("DEDENT", 3)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof FunctionDefinitionInstruction);
+        FunctionDefinitionInstruction def = (FunctionDefinitionInstruction) instructions.get(0);
+        assertEquals("sum", def.getFunctionName());
+        assertEquals(List.of("a", "b"), def.getParameters());
+        assertEquals(1, def.getBody().size());
+        assertTrue(def.getBody().get(0) instanceof AssignmentInstruction);
+    }
+
+    @Test
+    void testFunctionCallWithArguments() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("CALL", 1),
+            new Tokenizer.Token("sum", 1),
+            new Tokenizer.Token("with", 1),
+            new Tokenizer.Token("5", 1),
+            new Tokenizer.Token("10", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof FunctionCallInstruction);
+        FunctionCallInstruction call = (FunctionCallInstruction) instructions.get(0);
+        assertEquals("sum", call.getFunctionName());
+        assertEquals(List.of("5", "10"), call.getArguments());
+    }
+
+    @Test
+    void testFunctionCallWithInto() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("call", 1),
+            new Tokenizer.Token("myfunc", 1),
+            new Tokenizer.Token("with", 1),
+            new Tokenizer.Token("5", 1),
+            new Tokenizer.Token("into", 1),
+            new Tokenizer.Token("result", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof FunctionCallInstruction);
+        FunctionCallInstruction fci = (FunctionCallInstruction) instructions.get(0);
+        assertEquals("myfunc", fci.getFunctionName());
+        assertEquals(1, fci.getArguments().size());
+        assertEquals("5", fci.getArguments().get(0));
+        assertEquals("result", fci.getIntoVariable());
+    }
+
+    @Test
+    void testReturnInstructionParsing() {
+        List<Tokenizer.Token> tokens = Arrays.asList(
+            new Tokenizer.Token("return", 1),
+            new Tokenizer.Token("x + 1", 1)
+        );
+        Parser parser = new Parser(tokens);
+        List<Instruction> instructions = parser.parse();
+        assertEquals(1, instructions.size());
+        assertTrue(instructions.get(0) instanceof ReturnInstruction);
+        ReturnInstruction ret = (ReturnInstruction) instructions.get(0);
+        assertEquals("x + 1", ret.getExpression());
+    }
 }

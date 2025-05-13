@@ -1,0 +1,33 @@
+# Example: Functions with parameters, return, and into
+variable result
+
+define add a b
+    return a + b
+
+define multiply a b
+    return a * b
+
+call add with 5 7 into result
+write result in output.txt
+
+call multiply with 3 4 into result
+write result in output.txt
+
+# Early return
+
+define testEarlyReturn
+    set result to 1
+    return 123
+    set result to 2  # This will not run
+
+call testEarlyReturn into result
+write result in output.txt
+
+# Nested function call
+
+define outer x
+    call add with x 10 into result
+    return result
+
+call outer with 5 into result
+write result in output.txt

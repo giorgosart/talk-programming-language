@@ -60,13 +60,14 @@ public class InstructionExecutorTest {
         // Define function
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "myFunc",
+            java.util.Collections.emptyList(),
             java.util.List.of(new AssignmentInstruction("x", "42", 2)),
             1
         );
         exec.execute(new VariableInstruction("x", "0", 1));
         exec.execute(def);
         // Call function
-        FunctionCallInstruction call = new FunctionCallInstruction("myFunc", 3);
+        FunctionCallInstruction call = new FunctionCallInstruction("myFunc", java.util.Collections.emptyList(), 3);
         exec.execute(call);
         // x should be updated in the local scope, but after popScope, global x remains
         assertEquals("0", ctx.getVariable("x"));
@@ -76,7 +77,7 @@ public class InstructionExecutorTest {
     void testFunctionCallBeforeDefinitionThrows() {
         RuntimeContext ctx = new RuntimeContext();
         InstructionExecutor exec = new InstructionExecutor(ctx);
-        FunctionCallInstruction call = new FunctionCallInstruction("notDefined", 1);
+        FunctionCallInstruction call = new FunctionCallInstruction("notDefined", java.util.Collections.emptyList(), 1);
         Exception ex = assertThrows(RuntimeException.class, () -> exec.execute(call));
         assertTrue(ex.getMessage().contains("not defined"));
     }
@@ -276,5 +277,180 @@ public class InstructionExecutorTest {
         assertTrue(content2.contains("Hello log!"));
         assertTrue(content2.contains("Second entry"));
         java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(logFile));
+    }
+
+    @Test
+    void testCopyFileInstruction() throws Exception {
+        String srcFile = "test_src.txt";
+        String destFile = "test_dest.txt";
+        java.nio.file.Files.write(java.nio.file.Paths.get(srcFile), "copy me".getBytes());
+        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(destFile));
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        CopyFileInstruction cfi = new CopyFileInstruction(srcFile, destFile, 1);
+        exec.execute(cfi);
+        String content = java.nio.file.Files.readString(java.nio.file.Paths.get(destFile));
+        assertEquals("copy me", content);
+        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(srcFile));
+        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(destFile));
+    }
+
+    @Test
+    void testFunctionCallWithParametersAndArguments() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        // Define function with parameters a, b
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "sum",
+            java.util.List.of("a", "b"),
+            java.util.List.of(new AssignmentInstruction("result", "a + b", 2)),
+            1
+        );
+        exec.execute(def);
+        // Call function with arguments 5, 10
+        FunctionCallInstruction call = new FunctionCallInstruction("sum", java.util.List.of("5", "10"), 3);
+        exec.execute(call);
+        // result should be set in the function scope, not global
+        assertNull(ctx.getVariable("result"));
+    }
+
+    @Test
+    void testFunctionCallArgumentCountMismatchThrows() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "sum",
+            java.util.List.of("a", "b"),
+            java.util.List.of(new AssignmentInstruction("result", "a + b", 2)),
+            1
+        );
+        exec.execute(def);
+        // Call with only one argument
+        FunctionCallInstruction call = new FunctionCallInstruction("sum", java.util.List.of("5"), 3);
+        Exception ex = assertThrows(RuntimeException.class, () -> exec.execute(call));
+        assertTrue(ex.getMessage().contains("expects 2 arguments but got 1"));
+    }
+
+    @Test
+    void testFunctionReturnInstruction() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        // Function: return x + 1
+        ReturnInstruction ret = new ReturnInstruction("x + 1", 2);
+        // Should throw FunctionReturn with correct value
+        Exception ex = assertThrows(InstructionExecutor.FunctionReturn.class, () -> exec.execute(ret));
+        assertTrue(ex instanceof InstructionExecutor.FunctionReturn);
+    }
+
+    @Test
+    void testFunctionCallWithReturnValue() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        // Define function that returns a value
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "addOne",
+            java.util.List.of("x"),
+            java.util.List.of(new ReturnInstruction("x + 1", 2)),
+            1
+        );
+        exec.execute(def);
+        // Call function and capture return value
+        FunctionCallInstruction call = new FunctionCallInstruction("addOne", java.util.List.of("5"), 3);
+        Object result = null;
+        try {
+            result = exec.executeWithReturn(call);
+        } catch (InstructionExecutor.FunctionReturn fr) {
+            result = fr.getValue();
+        }
+        assertEquals(6, result); // Should be 5 + 1 = 6
+    }
+
+    @Test
+    void testFunctionCallWithReturnValueIntoVariable() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        // Define function that returns a value
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "addOne",
+            java.util.List.of("x"),
+            java.util.List.of(new ReturnInstruction("x + 1", 2)),
+            1
+        );
+        exec.execute(def);
+        // Call function and capture return value into variable
+        FunctionCallInstruction call = new FunctionCallInstruction("addOne", java.util.List.of("5"), "result", 3);
+        exec.execute(call);
+        // The result variable in the caller's scope should be set
+        assertEquals(6, ctx.getVariable("result"));
+    }
+
+    @Test
+    void testFunctionWithNoParameters() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "noParams",
+            java.util.Collections.emptyList(),
+            java.util.List.of(new ReturnInstruction("42", 2)),
+            1
+        );
+        exec.execute(def);
+        FunctionCallInstruction call = new FunctionCallInstruction("noParams", java.util.Collections.emptyList(), 3);
+        Object result = exec.executeWithReturn(call);
+        assertEquals(42, result);
+    }
+
+    @Test
+    void testFunctionWithParameters() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "add",
+            java.util.List.of("a", "b"),
+            java.util.List.of(new ReturnInstruction("a + b", 2)),
+            1
+        );
+        exec.execute(def);
+        FunctionCallInstruction call = new FunctionCallInstruction("add", java.util.List.of("3", "4"), 3);
+        Object result = exec.executeWithReturn(call);
+        assertEquals(7, result);
+    }
+
+    @Test
+    void testFunctionArgumentMismatchThrows() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "oneParam",
+            java.util.List.of("x"),
+            java.util.List.of(new ReturnInstruction("x", 2)),
+            1
+        );
+        exec.execute(def);
+        FunctionCallInstruction call = new FunctionCallInstruction("oneParam", java.util.Collections.emptyList(), 3);
+        Exception ex = assertThrows(RuntimeException.class, () -> exec.executeWithReturn(call));
+        assertTrue(ex.getMessage().contains("expects 1 arguments"));
+    }
+
+    @Test
+    void testFunctionReturnEarlyExit() {
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx);
+        FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
+            "earlyReturn",
+            java.util.List.of("x"),
+            java.util.List.of(
+                new AssignmentInstruction("y", "1", 2),
+                new ReturnInstruction("x", 3),
+                new AssignmentInstruction("y", "2", 4)
+            ),
+            1
+        );
+        exec.execute(def);
+        FunctionCallInstruction call = new FunctionCallInstruction("earlyReturn", java.util.List.of("99"), 5);
+        Object result = exec.executeWithReturn(call);
+        assertEquals(99, result);
+        // y should be 1, not 2, because of early return
+        assertNull(ctx.getVariable("y"));
     }
 }

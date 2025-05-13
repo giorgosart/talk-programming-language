@@ -175,6 +175,19 @@ public class Tokenizer {
                 tokens.add(new Token(filePart, i + 1));
                 continue;
             }
+            // Special handling for file copying: copy file <source> to <destination>
+            else if (trimmed.startsWith("copy file ") && trimmed.contains(" to ")) {
+                int srcIdx = "copy file ".length();
+                int toIdx = trimmed.indexOf(" to ");
+                String srcPart = trimmed.substring(srcIdx, toIdx).trim();
+                String destPart = trimmed.substring(toIdx + 4).trim();
+                tokens.add(new Token("copy", i + 1));
+                tokens.add(new Token("file", i + 1));
+                tokens.add(new Token(srcPart, i + 1));
+                tokens.add(new Token("to", i + 1));
+                tokens.add(new Token(destPart, i + 1));
+                continue;
+            }
             // Special handling for directory listing: list files in <directory> into <variable>
             else if (trimmed.startsWith("list files in ") && trimmed.contains(" into ")) {
                 int dirIdx = "list files in ".length();
@@ -198,6 +211,26 @@ public class Tokenizer {
                 }
                 tokens.add(new Token("log", i + 1));
                 tokens.add(new Token(message, i + 1));
+                continue;
+            }
+            // Special handling for parameterized function definition: define <name> <param1> <param2> ...
+            else if (trimmed.startsWith("define ")) {
+                String[] parts = trimmed.split("\\s+");
+                tokens.add(new Token("DEFINE", i + 1));
+                if (parts.length > 1) {
+                    for (int j = 1; j < parts.length; j++) {
+                        tokens.add(new Token(parts[j], i + 1));
+                    }
+                }
+                continue;
+            }
+            // Special handling for return: return <expression>
+            else if (trimmed.startsWith("return ")) {
+                tokens.add(new Token("return", i + 1));
+                String expr = trimmed.substring(7).trim();
+                if (!expr.isEmpty()) {
+                    tokens.add(new Token(expr, i + 1));
+                }
                 continue;
             }
             if (handledList) continue;

@@ -377,19 +377,75 @@
 - [x] **15.4** Unit and integration tests (Dep: 15.3)
 
 ### **16.0 File Deletion**
-- [ ] **16.1** Update Tokenizer to recognize `delete file <file>` (Dep: 2.1)
-- [ ] **16.2** Add `DeleteFileInstruction` class (Dep: 3.1)
-- [ ] **16.3** Implement logic to delete file (Dep: 16.2)
-- [ ] **16.4** Unit and integration tests (Dep: 16.3)
+- [x] **16.1** Update Tokenizer to recognize `delete file <file>` (Dep: 2.1)
+- [x] **16.2** Add `DeleteFileInstruction` class (Dep: 3.1)
+- [x] **16.3** Implement logic to delete file (Dep: 16.2)
+- [x] **16.4** Unit and integration tests (Dep: 16.3)
 
 ### **17.0 Directory Listing**
-- [ ] **17.1** Update Tokenizer to recognize `list files in <directory> into <variable>` (Dep: 2.1)
-- [ ] **17.2** Add `ListDirectoryInstruction` class (Dep: 3.1)
-- [ ] **17.3** Implement logic to fetch file names from a directory and assign as list (Dep: 17.2)
-- [ ] **17.4** Unit and integration tests (Dep: 17.3)
+- [x] **17.1** Update Tokenizer to recognize `list files in <directory> into <variable>` (Dep: 2.1)
+- [x] **17.2** Add `ListDirectoryInstruction` class (Dep: 3.1)
+- [x] **17.3** Implement logic to fetch file names from a directory and assign as list (Dep: 17.2)
+- [x] **17.4** Unit and integration tests (Dep: 17.3)
 
 ### **18.0 Logging**
-- [ ] **18.1** Update Tokenizer to recognize `log <message>` (Dep: 2.1)
-- [ ] **18.2** Add `LogInstruction` class (Dep: 3.1)
-- [ ] **18.3** Implement logic to write logs to a default log file (Dep: 18.2)
-- [ ] **18.4** Unit and integration tests (Dep: 18.3)
+- [x] **18.1** Update Tokenizer to recognize `log <message>` (Dep: 2.1)
+- [x] **18.2** Add `LogInstruction` class (Dep: 3.1)
+- [x] **18.3** Implement logic to write logs to a default log file (Dep: 18.2)
+- [x] **18.4** Unit and integration tests (Dep: 18.3)
+
+### **19.0 File Copying**
+- [x] **19.1** Update Tokenizer to recognize `copy file <source> to <destination>` (Dep: 2.1)
+- [x] **19.2** Add `CopyFileInstruction` class (Dep: 3.1)
+- [x] **19.3** Implement logic to copy contents from source to destination (Dep: 19.2)
+- [x] **19.4** Unit and integration tests (Dep: 19.3)
+
+## 🧠 Phase 13: Function Parameters and Return Values
+
+### **20.0 Function Parameters**
+
+- [x] **20.1** Update Tokenizer to parse parameterized function definitions (Dep: 2.1)  
+  - [x] Handle `define <name> <param1> <param2> ...`  
+  - [x] Tokenize parameters cleanly
+
+- [x] **20.2** Extend `FunctionDefinitionInstruction` to store parameter list (Dep: 12.2)  
+  - [x] Allow access to parameters by name within function body
+
+- [x] **20.3** Extend `FunctionCallInstruction` to support `call <name> with <args>` (Dep: 12.2)  
+  - [x] Validate argument count matches  
+  - [x] Bind arguments to parameters
+
+- [x] **20.4** Pass parameters into execution context during function call (Dep: 20.3)  
+  - [x] Inject as scoped variables  
+  - [x] Avoid polluting global context
+
+### **21.0 Function Return Values**
+
+- [x] **21.1** Update Tokenizer to recognize `return <expression>` (Dep: 2.1)  
+  - [x] Must be inside a function
+
+- [x] **21.2** Add `ReturnInstruction` (Dep: 3.1)  
+  - [x] Evaluate and return value  
+  - [x] Signal early function exit
+
+- [x] **21.3** Extend `FunctionCallInstruction` to accept `into <variable>` (Dep: 20.3, 21.2)  
+  - [x] Store returned value into provided variable
+
+- [x] **21.4** Handle return state in runtime (Dep: 21.2)  
+  - [x] Track whether a return was executed  
+  - [x] Exit function block accordingly
+
+### **22.0 Testing and Documentation**
+
+- [x] **22.1** Unit Tests (Dep: 21.4)  
+  - [x] Functions with/without parameters  
+  - [x] Return behavior and argument mismatch handling
+
+- [x] **22.2** Integration Tests (Dep: 22.1)  
+  - [x] Nested functions  
+  - [x] Functions with return values  
+  - [x] Reassignment of return value
+
+- [x] **22.3** Update README and Examples (Dep: 22.2)  
+  - [x] Document `define`, `call with`, `return`, `into`  
+  - [x] Show sample use cases
