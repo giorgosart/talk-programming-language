@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class InstructionExecutorTest {
+    private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+
     @Test
     void testVariableDeclaration() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         VariableInstruction vi = new VariableInstruction("x", null, 1);
         exec.execute(vi);
         assertTrue(ctx.hasVariable("x"));
@@ -20,7 +22,7 @@ public class InstructionExecutorTest {
     @Test
     void testVariableDeclarationWithValue() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         VariableInstruction vi = new VariableInstruction("x", "10", 2);
         exec.execute(vi);
         assertEquals("10", ctx.getVariable("x"));
@@ -29,7 +31,7 @@ public class InstructionExecutorTest {
     @Test
     void testAssignment() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         exec.execute(new VariableInstruction("x", null, 1));
         exec.execute(new AssignmentInstruction("x", "42", 2));
         assertEquals("42", ctx.getVariable("x"));
@@ -38,7 +40,7 @@ public class InstructionExecutorTest {
     @Test
     void testAssignmentToUndeclaredVariable() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         AssignmentInstruction ai = new AssignmentInstruction("y", "5", 3);
         Exception ex = assertThrows(RuntimeException.class, () -> exec.execute(ai));
         assertTrue(ex.getMessage().contains("not declared"));
@@ -47,7 +49,7 @@ public class InstructionExecutorTest {
     @Test
     void testDuplicateVariableDeclaration() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         exec.execute(new VariableInstruction("x", null, 1));
         Exception ex = assertThrows(RuntimeException.class, () -> exec.execute(new VariableInstruction("x", null, 2)));
         assertTrue(ex.getMessage().contains("already declared"));
@@ -56,7 +58,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionDefinitionAndCallExecution() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // Define function
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "myFunc",
@@ -76,7 +78,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionCallBeforeDefinitionThrows() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionCallInstruction call = new FunctionCallInstruction("notDefined", java.util.Collections.emptyList(), 1);
         Exception ex = assertThrows(RuntimeException.class, () -> exec.execute(call));
         assertTrue(ex.getMessage().contains("not defined"));
@@ -93,7 +95,7 @@ public class InstructionExecutorTest {
         }
         List<Instruction> body = List.of(new CollectInstruction());
         RepeatInstruction ri = new RepeatInstruction("fruit", "fruits", body, 1);
-        InstructionExecutor exec = new InstructionExecutor(ctx) {
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn) {
             @Override
             public void execute(Instruction instruction) {
                 if (instruction instanceof CollectInstruction) {
@@ -118,7 +120,7 @@ public class InstructionExecutorTest {
         }
         List<Instruction> body = List.of(new CollectPositionInstruction());
         RepeatInstruction ri = new RepeatInstruction("fruit", "fruits", body, 1);
-        InstructionExecutor exec = new InstructionExecutor(ctx) {
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn) {
             @Override
             public void execute(Instruction instruction) {
                 if (instruction instanceof CollectPositionInstruction) {
@@ -175,7 +177,7 @@ public class InstructionExecutorTest {
         }
         List<Instruction> body = List.of(new CollectPositionInstruction());
         RepeatInstruction ri = new RepeatInstruction("animal", "animals", body, 1);
-        InstructionExecutor exec = new InstructionExecutor(ctx) {
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn) {
             @Override
             public void execute(Instruction instruction) {
                 if (instruction instanceof CollectPositionInstruction) {
@@ -197,7 +199,7 @@ public class InstructionExecutorTest {
         java.nio.file.Files.write(java.nio.file.Paths.get(fileName), fileContent.getBytes());
         try {
             RuntimeContext ctx = new RuntimeContext();
-            InstructionExecutor exec = new InstructionExecutor(ctx);
+            InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
             ReadFileInstruction rfi = new ReadFileInstruction(fileName, "result", 1);
             exec.execute(rfi);
             assertTrue(ctx.hasVariable("result"));
@@ -212,7 +214,7 @@ public class InstructionExecutorTest {
         String fileName = "test_appendfile.txt";
         java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(fileName));
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         AppendToFileInstruction afi = new AppendToFileInstruction("hello world", fileName, 1);
         exec.execute(afi);
         String content = java.nio.file.Files.readString(java.nio.file.Paths.get(fileName));
@@ -231,7 +233,7 @@ public class InstructionExecutorTest {
         java.nio.file.Files.write(java.nio.file.Paths.get(fileName), "delete me".getBytes());
         assertTrue(new java.io.File(fileName).exists());
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         DeleteFileInstruction dfi = new DeleteFileInstruction(fileName, 1);
         exec.execute(dfi);
         assertFalse(new java.io.File(fileName).exists());
@@ -246,7 +248,7 @@ public class InstructionExecutorTest {
         java.nio.file.Files.write(java.nio.file.Paths.get(file1), "abc".getBytes());
         java.nio.file.Files.write(java.nio.file.Paths.get(file2), "def".getBytes());
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         ListDirectoryInstruction ldi = new ListDirectoryInstruction(dirName, "files", 1);
         exec.execute(ldi);
         assertTrue(ctx.hasVariable("files"));
@@ -266,7 +268,7 @@ public class InstructionExecutorTest {
         String logFile = "debug.log";
         java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(logFile));
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         LogInstruction li = new LogInstruction("Hello log!", 1);
         exec.execute(li);
         String content = java.nio.file.Files.readString(java.nio.file.Paths.get(logFile));
@@ -286,7 +288,7 @@ public class InstructionExecutorTest {
         java.nio.file.Files.write(java.nio.file.Paths.get(srcFile), "copy me".getBytes());
         java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(destFile));
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         CopyFileInstruction cfi = new CopyFileInstruction(srcFile, destFile, 1);
         exec.execute(cfi);
         String content = java.nio.file.Files.readString(java.nio.file.Paths.get(destFile));
@@ -298,7 +300,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionCallWithParametersAndArguments() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // Define function with parameters a, b
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "sum",
@@ -317,7 +319,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionCallArgumentCountMismatchThrows() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "sum",
             java.util.List.of("a", "b"),
@@ -334,7 +336,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionReturnInstruction() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // Function: return x + 1
         ReturnInstruction ret = new ReturnInstruction("x + 1", 2);
         // Should throw FunctionReturn with correct value
@@ -345,7 +347,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionCallWithReturnValue() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // Define function that returns a value
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "addOne",
@@ -368,7 +370,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionCallWithReturnValueIntoVariable() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // Define function that returns a value
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "addOne",
@@ -387,7 +389,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionWithNoParameters() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "noParams",
             java.util.Collections.emptyList(),
@@ -403,7 +405,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionWithParameters() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "add",
             java.util.List.of("a", "b"),
@@ -419,7 +421,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionArgumentMismatchThrows() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "oneParam",
             java.util.List.of("x"),
@@ -435,7 +437,7 @@ public class InstructionExecutorTest {
     @Test
     void testFunctionReturnEarlyExit() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         FunctionDefinitionInstruction def = new FunctionDefinitionInstruction(
             "earlyReturn",
             java.util.List.of("x"),

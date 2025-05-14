@@ -1,0 +1,142 @@
+Initialized native services in: /Users/George.Artemiou/.gradle/native
+Initialized jansi services in: /Users/George.Artemiou/.gradle/native
+Found daemon DaemonInfo{pid=75681, address=[f9af8ac1-40a9-4e3e-9c2a-f0366d56e631 port:56579, addresses:[/127.0.0.1]], state=Idle, lastBusy=1747215637988, context=DefaultDaemonContext[uid=0891df4a-ee6c-42b4-88f5-09f228283808,javaHome=/Users/George.Artemiou/OpenJDK/jdk-18.0.2.jdk/Contents/Home,javaVersion=18,javaVendor=Oracle Corporation,daemonRegistryDir=/Users/George.Artemiou/.gradle/daemon,pid=75681,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Dfile.encoding=UTF-8,-Duser.country=GB,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+At least one daemon option is different.
+Wanted: DaemonRequestContext{jvmCriteria=/Users/George.Artemiou/OpenJDK/jdk-18.0.2.jdk/Contents/Home (no JDK specified, using current Java home), daemonOpts=[-XX:MaxMetaspaceSize=384m, -XX:+HeapDumpOnOutOfMemoryError, -Xms256m, -Xmx512m, -Dfile.encoding=UTF-8, -Duser.country=GB, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=0891df4a-ee6c-42b4-88f5-09f228283808,javaHome=/Users/George.Artemiou/OpenJDK/jdk-18.0.2.jdk/Contents/Home,javaVersion=18,javaVendor=Oracle Corporation,daemonRegistryDir=/Users/George.Artemiou/.gradle/daemon,pid=75681,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Dfile.encoding=UTF-8,-Duser.country=GB,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+The client will now receive all logging from the daemon (pid: 16844). The daemon log file: /Users/George.Artemiou/.gradle/daemon/8.13/daemon-16844.out.log
+Starting 341st build in daemon [uptime: 27 hrs 48 mins 48.538 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 512 MiB, non-heap usage: 25% of 384 MiB]
+Using 10 worker leases.
+Invalidating in-memory cache of /Users/George.Artemiou/talk-programming-language/.gradle/8.13/fileHashes/fileHashes.bin
+Invalidating in-memory cache of /Users/George.Artemiou/talk-programming-language/.gradle/8.13/fileHashes/resourceHashesCache.bin
+Invalidating in-memory cache of /Users/George.Artemiou/.gradle/caches/journal-1/file-access.bin
+Now considering [/Users/George.Artemiou/talk-programming-language] as hierarchies to watch
+Reusing configuration cache.
+Now considering [/Users/George.Artemiou/talk-programming-language] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Tasks to be executed: [task ':app:compileJava', task ':app:processResources', task ':app:classes', task ':app:compileTestJava', task ':app:processTestResources', task ':app:testClasses', task ':app:test']
+Tasks that were excluded: []
+Resolve mutations for :app:compileJava (Thread[Execution worker,5,main]) started.
+Resolve mutations for :app:processResources (Thread[Execution worker Thread 2,5,main]) started.
+Resolve mutations for :app:processTestResources (Thread[Execution worker Thread 3,5,main]) started.
+:app:processTestResources (Thread[Execution worker Thread 3,5,main]) started.
+:app:processResources (Thread[Execution worker Thread 2,5,main]) started.
+:app:compileJava (Thread[Execution worker,5,main]) started.
+
+> Task :app:processTestResources NO-SOURCE
+Skipping task ':app:processTestResources' as it has no source files and no previous output files.
+
+> Task :app:processResources NO-SOURCE
+Skipping task ':app:processResources' as it has no source files and no previous output files.
+
+> Task :app:compileJava UP-TO-DATE
+Caching disabled for task ':app:compileJava' because:
+  Build cache is disabled
+Skipping task ':app:compileJava' as it is up-to-date.
+Resolve mutations for :app:classes (Thread[Execution worker,5,main]) started.
+:app:classes (Thread[Execution worker,5,main]) started.
+
+> Task :app:classes UP-TO-DATE
+Skipping task ':app:classes' as it has no actions.
+Resolve mutations for :app:compileTestJava (Thread[Execution worker,5,main]) started.
+:app:compileTestJava (Thread[Execution worker,5,main]) started.
+
+> Task :app:compileTestJava UP-TO-DATE
+Invalidating in-memory cache of /Users/George.Artemiou/.gradle/caches/8.13/fileHashes/fileHashes.bin
+Invalidating in-memory cache of /Users/George.Artemiou/.gradle/caches/8.13/fileHashes/resourceHashesCache.bin
+Caching disabled for task ':app:compileTestJava' because:
+  Build cache is disabled
+Skipping task ':app:compileTestJava' as it is up-to-date.
+Resolve mutations for :app:testClasses (Thread[Execution worker,5,main]) started.
+:app:testClasses (Thread[Execution worker,5,main]) started.
+
+> Task :app:testClasses UP-TO-DATE
+Skipping task ':app:testClasses' as it has no actions.
+Resolve mutations for :app:test (Thread[Execution worker,5,main]) started.
+:app:test (Thread[Execution worker,5,main]) started.
+Gradle Test Executor 240 started executing tests.
+Gradle Test Executor 240 finished executing tests.
+
+> Task :app:test FAILED
+Caching disabled for task ':app:test' because:
+  Build cache is disabled
+Task ':app:test' is not up-to-date because:
+  Task has failed previously.
+Starting process 'Gradle Test Executor 240'. Working directory: /Users/George.Artemiou/talk-programming-language/app Command: /Users/George.Artemiou/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.15+6/Contents/Home/bin/java -Dorg.gradle.internal.worker.tmpdir=/Users/George.Artemiou/talk-programming-language/app/build/tmp/test/work @/Users/George.Artemiou/.gradle/.tmp/gradle-worker-classpath7621382331758776809txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 240'
+Successfully started process 'Gradle Test Executor 240'
+
+InputFallbackIntegrationTest > testInputFallbackWithInvalidInput() STANDARD_OUT
+    [DEBUG] Processing line 1: 'attempt' (indent=0)
+    [DEBUG] Line: 'attempt'
+    [DEBUG] Raw part: 'attempt'
+    [DEBUG] Processing line 2: '  ask "Enter a number:" and store in num' (indent=2)
+    [DEBUG] Emitting INDENT at line 2
+    [DEBUG] Line: 'ask "Enter a number:" and store in num'
+    [DEBUG] Processing line 3: '  write num in output.txt' (indent=2)
+    [DEBUG] Line: 'write num in output.txt'
+    [DEBUG] Raw part: 'write'
+    [DEBUG] Raw part: 'num'
+    [DEBUG] Raw part: 'in'
+    [DEBUG] Raw part: 'output.txt'
+    [DEBUG] Processing line 4: 'if that fails' (indent=0)
+    [DEBUG] Processing line 5: '  write "Invalid input!" in output.txt' (indent=2)
+    [DEBUG] tryBlockBaseIndent=2, current indent=2
+    [DEBUG] Line: 'write "Invalid input!" in output.txt'
+    [DEBUG] Raw part: 'write'
+    [DEBUG] Quoted token: 'Invalid input!'
+    [DEBUG] Raw part: 'in'
+    [DEBUG] Raw part: 'output.txt'
+    [TOKENS]
+    attempt (line 1)
+    INDENT (line 2)
+    ask (line 2)
+    Enter a number: (line 2)
+    and (line 2)
+    store (line 2)
+    in (line 2)
+    num (line 2)
+    write (line 3)
+    num (line 3)
+    in (line 3)
+    output.txt (line 3)
+    if (line 4)
+    that (line 4)
+    fails (line 4)
+    write (line 5)
+    Invalid input! (line 5)
+    in (line 5)
+    output.txt (line 5)
+    DEDENT (line 5)
+    [TEST DEBUG] Parsed instructions: [talk.AttemptInstruction@210ab13f]
+    [TEST DEBUG] AttemptInstruction tryBlock size: 3
+    [TEST DEBUG] AttemptInstruction catchBlock size: 0
+    Enter a number: Invalid input. Please try again.
+    Enter a number: Invalid input. Please try again.
+    Enter a number: Invalid input. Please try again.
+    [DEBUG] Exception in try block, executing catch block: java.lang.RuntimeException: Invalid input after 3 attempts
+
+InputFallbackIntegrationTest > testInputFallbackWithInvalidInput() FAILED
+    org.opentest4j.AssertionFailedError: output.txt should exist after script execution ==> expected: <true> but was: <false>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+        at app//org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+        at app//org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:214)
+        at app//talk.InputFallbackIntegrationTest.testInputFallbackWithInvalidInput(InputFallbackIntegrationTest.java:54)
+Finished generating test XML results (0.002 secs) into: /Users/George.Artemiou/talk-programming-language/app/build/test-results/test
+Generating HTML test report...
+Finished generating test html results (0.007 secs) into: /Users/George.Artemiou/talk-programming-language/app/build/reports/tests/test
+
+[Incubating] Problems report is available at: file:///Users/George.Artemiou/talk-programming-language/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+3 actionable tasks: 1 executed, 2 up-to-date
+Watched directory hierarchies: [/Users/George.Artemiou/talk-programming-language]
+Configuration cache entry reused.

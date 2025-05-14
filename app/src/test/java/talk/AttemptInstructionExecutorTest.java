@@ -5,10 +5,12 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AttemptInstructionExecutorTest {
+    private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+
     @Test
     void testAttemptSuccess() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         VariableInstruction vi = new VariableInstruction("x", 1, 1);
         AssignmentInstruction ai = new AssignmentInstruction("x", 2, 2);
         AttemptInstruction attempt = new AttemptInstruction(
@@ -23,7 +25,7 @@ public class AttemptInstructionExecutorTest {
     @Test
     void testAttemptFailure() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         // This will fail: assignment to undeclared variable
         AssignmentInstruction ai = new AssignmentInstruction("y", 2, 2);
         AttemptInstruction attempt = new AttemptInstruction(

@@ -7,6 +7,8 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ListIntegrationTest {
+    private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+
     @Test
     void testDeclareListAndAccessByIndex() {
         RuntimeContext ctx = new RuntimeContext();
@@ -24,7 +26,7 @@ public class ListIntegrationTest {
         class CollectInstruction implements Instruction { public int getLineNumber() { return 2; } }
         List<Instruction> body = List.of(new CollectInstruction());
         RepeatInstruction ri = new RepeatInstruction("num", "nums", body, 1);
-        InstructionExecutor exec = new InstructionExecutor(ctx) {
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn) {
             @Override
             public void execute(Instruction instruction) {
                 if (instruction instanceof CollectInstruction) {
@@ -52,15 +54,16 @@ public class ListIntegrationTest {
             new WriteInstruction("letter", fileName, 3)
         );
         RepeatInstruction ri = new RepeatInstruction("letter", "letters", body, 1);
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         exec.execute(ri);
         String content = Files.readString(file.toPath());
-        assertTrue(content.contains("1"));
-        assertTrue(content.contains("A"));
-        assertTrue(content.contains("2"));
-        assertTrue(content.contains("B"));
-        assertTrue(content.contains("3"));
-        assertTrue(content.contains("C"));
+        // Check that all expected values are present
+        assertTrue(content.contains("1"), "File should contain '1'");
+        assertTrue(content.contains("A"), "File should contain 'A'");
+        assertTrue(content.contains("2"), "File should contain '2'");
+        assertTrue(content.contains("B"), "File should contain 'B'");
+        assertTrue(content.contains("3"), "File should contain '3'");
+        assertTrue(content.contains("C"), "File should contain 'C'");
         file.delete();
     }
 

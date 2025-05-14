@@ -9,9 +9,11 @@ public class AskInstructionExecutorTest {
     @Test
     void testAskStoresValue() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
-        // Simulate input by directly setting variable (since interactive input can't be automated here)
-        ctx.setVariable("name", "Alice");
+        // Provide input for the ask instruction
+        java.io.InputStream in = new java.io.ByteArrayInputStream("Alice\n".getBytes());
+        InstructionExecutor exec = new InstructionExecutor(ctx, in);
+        AskInstruction ask = new AskInstruction("What is your name?", "name", 1);
+        exec.execute(ask);
         assertEquals("Alice", ctx.getVariable("name"));
     }
 }

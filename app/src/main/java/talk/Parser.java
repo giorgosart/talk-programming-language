@@ -2,15 +2,11 @@ package talk;
 
 import java.util.ArrayList;
 import java.util.List;
-import talk.ReadFileInstruction;
-import talk.AppendToFileInstruction;
-import talk.DeleteFileInstruction;
-import talk.LogInstruction;
-import talk.CopyFileInstruction;
 
 public class Parser {
     private final List<Tokenizer.Token> tokens;
     private int pos = 0;
+    private final InstructionFactory instructionFactory = new InstructionFactory();
 
     public Parser(List<Tokenizer.Token> tokens) {
         this.tokens = tokens;
@@ -27,6 +23,13 @@ public class Parser {
         return instructions;
     }
 
+    // Helper to look ahead for 'if that fails' sequence
+    private boolean peekIfThatFails() {
+        return peek("if") && (pos + 2 < tokens.size()) &&
+            tokens.get(pos + 1).value.equals("that") &&
+            tokens.get(pos + 2).value.equals("fails");
+    }
+
     private Instruction parseInstructionWithIndent() {
         if (pos >= tokens.size()) return null;
         Tokenizer.Token token = tokens.get(pos);
@@ -34,228 +37,249 @@ public class Parser {
         int line = token.lineNumber;
         if ("INDENT".equals(value)) {
             pos++;
-            // Parse a block of instructions until DEDENT
-            List<Instruction> block = new ArrayList<>();
-            while (pos < tokens.size() && !peek("DEDENT")) {
-                Instruction instr = parseInstructionWithIndent();
-                if (instr != null) block.add(instr);
-            }
-            if (peek("DEDENT")) pos++;
-            // Return a special BlockInstruction or flatten in parent
-            // For now, flatten: return null, parent will collect block
+            List<Instruction> block = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
             return new BlockInstruction(block, line);
         }
         if ("DEDENT".equals(value)) {
-            // Should be handled by block logic
             pos++;
             return null;
         }
         if ("otherwise".equals(value)) {
-            pos++;
-            // Otherwise block can be indented or single-line
-            List<Instruction> elseInstrs = new ArrayList<>();
-            if (peek("INDENT")) {
-                pos++;
-                while (pos < tokens.size() && !peek("DEDENT")) {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) elseInstrs.add(instr);
-                }
-                if (peek("DEDENT")) pos++;
-            } else {
-                Instruction instr = parseInstructionWithIndent();
-                if (instr != null) elseInstrs.add(instr);
-            }
-            return new OtherwiseBlockInstruction(elseInstrs, line);
+            // Do not consume 'otherwise'; let parseIfInstruction handle it as the else block
+            return null;
         }
         if ("if".equals(value)) {
             pos++;
-            // Parse the full logical condition, including chained 'and', 'or', and 'not' operators.
-            // The entire condition string is passed to ExpressionResolver, which builds the logic tree.
-            StringBuilder cond = new StringBuilder();
-            while (pos < tokens.size() && !"then".equals(tokens.get(pos).value)) {
-                cond.append(tokens.get(pos).value).append(" ");
-                pos++;
-            }
-            if (peek("then")) pos++;
-            List<Instruction> thenInstrs = new ArrayList<>();
-            if (peek("INDENT")) {
-                pos++;
-                while (pos < tokens.size() && !peek("DEDENT") && !peek("otherwise")) {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) thenInstrs.add(instr);
-                }
-                if (peek("DEDENT")) pos++;
-            } else {
-                Instruction instr = parseInstructionWithIndent();
-                if (instr != null) thenInstrs.add(instr);
-            }
-            List<Instruction> elseInstrs = new ArrayList<>();
-            if (peek("otherwise")) {
-                pos++;
-                if (peek("INDENT")) {
-                    pos++;
-                    while (pos < tokens.size() && !peek("DEDENT")) {
-                        Instruction instr = parseInstructionWithIndent();
-                        if (instr != null) elseInstrs.add(instr);
-                    }
-                    if (peek("DEDENT")) pos++;
-                } else {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) elseInstrs.add(instr);
-                }
-            }
-            return new IfInstruction(cond.toString().trim(), thenInstrs, elseInstrs, line);
+            return parseIfInstruction(line);
         }
         if ("attempt".equals(value)) {
             pos++;
-            List<Instruction> tryBlock = new ArrayList<>();
+            List<Instruction> tryBlock = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+            if (peek("DEDENT")) pos++;
             List<Instruction> catchBlock = new ArrayList<>();
-            if (peek("INDENT")) {
-                pos++;
-                while (pos < tokens.size() && !peek("DEDENT") && !peek("if")) {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) tryBlock.add(instr);
-                }
-                if (peek("DEDENT")) pos++;
-            } else {
-                Instruction instr = parseInstructionWithIndent();
-                if (instr != null) tryBlock.add(instr);
-            }
-            if (peek("if")) {
-                // 'if that fails' or similar fallback
-                pos++;
-                if (peek("that")) pos++;
-                if (peek("fails")) pos++;
+            if (peekIfThatFails()) {
+                pos += 3; // skip 'if', 'that', 'fails'
+                int fallbackIndent = getIndentLevel(pos > 0 ? pos - 1 : 0);
+                System.out.println("[PARSER DEBUG] Parsing fallback/catch block after 'if that fails' at pos=" + pos + ", fallbackIndent=" + fallbackIndent);
                 if (peek("INDENT")) {
                     pos++;
-                    while (pos < tokens.size() && !peek("DEDENT")) {
+                    catchBlock = parseIndentedBlockWithParentIndent(fallbackIndent);
+                } else {
+                    while (pos < tokens.size() && !peek("DEDENT") && !isBlockBoundaryAtIndent(fallbackIndent)) {
                         Instruction instr = parseInstructionWithIndent();
                         if (instr != null) catchBlock.add(instr);
                     }
                     if (peek("DEDENT")) pos++;
-                } else {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) catchBlock.add(instr);
+                }
+                System.out.println("[PARSER DEBUG] Finished parsing catch block, size: " + catchBlock.size());
+                for (Instruction instr : catchBlock) {
+                    System.out.println("[PARSER DEBUG] Catch block instruction: " + instr.getClass().getSimpleName() + ": " + instr);
                 }
             }
+            System.out.println("[PARSER DEBUG] Returning AttemptInstruction: tryBlock size=" + tryBlock.size() + ", catchBlock size=" + catchBlock.size());
             return new AttemptInstruction(tryBlock, catchBlock, line);
         }
         if ("repeat".equals(value)) {
-            pos++;
-            // Check for list iteration: repeat for each item in items
-            if (peek("for")) {
-                pos++;
-                expect("each");
-                String itemVar = expectIdentifier();
-                expect("in");
-                String listVar = expectIdentifier();
-                List<Instruction> body = new ArrayList<>();
-                if (peek("INDENT")) {
-                    pos++;
-                    while (pos < tokens.size() && !peek("DEDENT")) {
-                        Instruction instr = parseInstructionWithIndent();
-                        if (instr != null) body.add(instr);
-                    }
-                    if (peek("DEDENT")) pos++;
-                } else {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) body.add(instr);
-                }
-                return new RepeatInstruction(itemVar, listVar, body, line);
-            }
-            // Parse count expression (repeat N times)
-            StringBuilder countExpr = new StringBuilder();
-            while (pos < tokens.size() && !"times".equals(tokens.get(pos).value)) {
-                countExpr.append(tokens.get(pos).value).append(" ");
-                pos++;
-            }
-            if (!peek("times")) {
-                throw new RuntimeException("Syntax error at line " + line + ": Expected 'times' after repeat count");
-            }
-            pos++; // skip 'times'
-            List<Instruction> body = new ArrayList<>();
-            if (peek("INDENT")) {
-                pos++;
-                while (pos < tokens.size() && !peek("DEDENT")) {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) body.add(instr);
-                }
-                if (peek("DEDENT")) pos++;
-            } else {
-                Instruction instr = parseInstructionWithIndent();
-                if (instr != null) body.add(instr);
-            }
-            return new RepeatInstruction(countExpr.toString().trim(), body, line);
+            return parseRepeatInstruction(line);
         }
         if ("DEFINE".equals(value)) {
-            pos++;
-            String functionName = expectIdentifier();
-            // Parse parameter names (all identifiers until INDENT)
-            List<String> parameters = new ArrayList<>();
-            while (pos < tokens.size() && !peek("INDENT") && !peek("DEDENT") && !peek("NEWLINE")) {
-                Tokenizer.Token paramToken = tokens.get(pos);
-                // Only accept identifiers (not keywords or symbols)
-                if (paramToken.value.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-                    parameters.add(paramToken.value);
-                    pos++;
-                } else {
-                    break;
-                }
-            }
-            List<Instruction> body = new ArrayList<>();
-            if (peek("INDENT")) {
-                pos++;
-                while (pos < tokens.size() && !peek("DEDENT")) {
-                    Instruction instr = parseInstructionWithIndent();
-                    if (instr != null) body.add(instr);
-                }
-                if (peek("DEDENT")) pos++;
-            } else {
-                throw new RuntimeException("Syntax error at line " + line + ": Function definition requires an indented block");
-            }
-            return new FunctionDefinitionInstruction(functionName, parameters, body, line);
+            return parseFunctionDefinition(line);
         }
         if ("call".equalsIgnoreCase(value)) {
-            pos++;
-            String functionName = expectIdentifier();
-            List<String> arguments = new ArrayList<>();
-            if (peek("with")) {
-                pos++;
-                // Parse arguments (all values until INDENT, DEDENT, NEWLINE, or 'into')
-                while (pos < tokens.size() && !peek("INDENT") && !peek("DEDENT") && !peek("NEWLINE") && !peek("into")) {
-                    Tokenizer.Token argToken = tokens.get(pos);
-                    // Accept identifiers, numbers, or quoted strings as arguments
-                    if (argToken.value.matches("[a-zA-Z_][a-zA-Z0-9_]*") || argToken.value.matches("\".*\"") || argToken.value.matches("-?\\d+(\\.\\d+)?")) {
-                        arguments.add(argToken.value);
-                        pos++;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            String intoVariable = null;
-            if (peek("into")) {
-                pos++;
-                if (pos < tokens.size() && tokens.get(pos).value.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-                    intoVariable = tokens.get(pos).value;
-                    pos++;
-                } else {
-                    throw new RuntimeException("Syntax error at line " + line + ": Expected variable name after 'into'");
-                }
-            }
-            return new FunctionCallInstruction(functionName, arguments, intoVariable, line);
+            return parseFunctionCall(line);
         }
         if ("return".equals(value)) {
-            pos++;
-            String expr = "";
-            if (pos < tokens.size() && !tokens.get(pos).value.equals("INDENT") && !tokens.get(pos).value.equals("DEDENT") && !tokens.get(pos).value.equals("NEWLINE")) {
-                expr = tokens.get(pos).value;
-                pos++;
-            }
-            return new ReturnInstruction(expr, line);
+            return parseReturn(line);
         }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();
+    }
+
+    private List<Instruction> parseIndentedBlock() {
+        return parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+    }
+
+    // Enhanced: Accepts parentIndent to handle 'otherwise' and block keywords only at correct indentation
+    private List<Instruction> parseIndentedBlockWithParentIndent(int parentIndent) {
+        List<Instruction> block = new ArrayList<>();
+        if (peek("INDENT")) {
+            pos++;
+            while (pos < tokens.size() && !peek("DEDENT")) {
+                // Break if a block boundary keyword appears at the parent indentation level
+                if (isBlockBoundaryAtIndent(parentIndent) || peekIfThatFails()) {
+                    System.out.println("[PARSER DEBUG] Breaking block at boundary keyword '" + tokens.get(pos).value + "' at indent " + getIndentLevel(pos > 0 ? pos - 1 : 0) + " (parent: " + parentIndent + ") pos=" + pos);
+                    if (block.isEmpty()) {
+                        pos++;
+                    }
+                    break;
+                }
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) block.add(instr);
+            }
+            if (peek("DEDENT")) pos++;
+        } else {
+            while (pos < tokens.size() && !peek("DEDENT")) {
+                if (isBlockBoundaryAtIndent(parentIndent) || peekIfThatFails()) {
+                    System.out.println("[PARSER DEBUG] Breaking block at boundary keyword '" + tokens.get(pos).value + "' at indent " + getIndentLevel(pos > 0 ? pos - 1 : 0) + " (parent: " + parentIndent + ") pos=" + pos);
+                    if (block.isEmpty()) {
+                        pos++;
+                    }
+                    break;
+                }
+                Instruction instr = parseInstructionWithIndent();
+                if (instr != null) block.add(instr);
+            }
+        }
+        System.out.println("[PARSER DEBUG] Finished block at indent " + parentIndent + ", block size: " + block.size());
+        return block;
+    }
+
+    // Helper: returns true if the current token is a block boundary keyword at the given indentation level
+    private boolean isBlockBoundaryAtIndent(int indentLevel) {
+        if (pos >= tokens.size()) return false;
+        String val = tokens.get(pos).value;
+        // List of block boundary keywords
+        if (val.equals("otherwise") || val.equals("if") || val.equals("attempt") || val.equals("repeat") || val.equals("DEFINE") || val.equals("call") || val.equals("return")) {
+            int tokenIndent = getIndentLevel(pos > 0 ? pos - 1 : 0);
+            boolean isBoundary = tokenIndent == indentLevel;
+            if (isBoundary) {
+                System.out.println("[PARSER DEBUG] Block boundary detected: '" + val + "' at indent " + tokenIndent + " (parent: " + indentLevel + ") pos=" + pos);
+            }
+            return isBoundary;
+        }
+        // Also treat DEDENT as a block boundary at the parent indent
+        if (val.equals("DEDENT")) {
+            int tokenIndent = getIndentLevel(pos > 0 ? pos - 1 : 0);
+            if (tokenIndent <= indentLevel) {
+                System.out.println("[PARSER DEBUG] DEDENT block boundary at indent " + tokenIndent + " (parent: " + indentLevel + ") pos=" + pos);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Instruction parseIfInstruction(int line) {
+        int ifIndent = (pos > 0) ? getIndentLevel(pos - 1) : 0;
+        StringBuilder cond = new StringBuilder();
+        while (pos < tokens.size() && !"then".equals(tokens.get(pos).value)) {
+            cond.append(tokens.get(pos).value).append(" ");
+            pos++;
+        }
+        if (peek("then")) pos++;
+        List<Instruction> thenInstrs = parseIndentedBlockWithParentIndent(ifIndent);
+        while (peek("DEDENT")) pos++;
+        List<Instruction> elseInstrs = new ArrayList<>();
+        if (peek("otherwise")) {
+            int otherwiseIndent = (pos > 0) ? getIndentLevel(pos - 1) : 0;
+            if (otherwiseIndent == ifIndent) {
+                pos++;
+                elseInstrs = parseIndentedBlockWithParentIndent(ifIndent);
+            }
+        }
+        return new IfInstruction(cond.toString().trim(), thenInstrs, elseInstrs, line);
+    }
+
+    /**
+     * Utility to parse a list of identifiers or values until a stop token.
+     * Used for both function parameters and arguments.
+     */
+    private List<String> parseIdentifiersOrValuesUntil(String... stopTokens) {
+        List<String> result = new ArrayList<>();
+        outer: while (pos < tokens.size()) {
+            for (String stop : stopTokens) {
+                if (peek(stop)) break outer;
+            }
+            Tokenizer.Token token = tokens.get(pos);
+            // Accept identifiers, quoted strings, or numbers
+            if (token.value.matches("[a-zA-Z_][a-zA-Z0-9_]*") || token.value.matches("\".*\"") || token.value.matches("-?\\d+(\\.\\d+)?")) {
+                result.add(token.value);
+                pos++;
+            } else {
+                break;
+            }
+        }
+        return result;
+    }
+
+    // Helper to get indentation for a given token index by scanning backwards for INDENT/DEDENT
+    private int getIndentLevel(int tokenIndex) {
+        int indent = 0;
+        for (int i = 0; i <= tokenIndex; i++) {
+            String val = tokens.get(i).value;
+            if ("INDENT".equals(val)) indent++;
+            else if ("DEDENT".equals(val)) indent--;
+        }
+        return indent;
+    }
+
+    // Handler for parsing repeat-instruction
+    private Instruction parseRepeatInstruction(int line) {
+        pos++;
+        if (peek("for")) {
+            pos++;
+            expect("each");
+            String itemVar = expectIdentifier();
+            expect("in");
+            String listVar = expectIdentifier();
+            List<Instruction> body = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+            return new RepeatInstruction(itemVar, listVar, body, line);
+        }
+        StringBuilder countExpr = new StringBuilder();
+        while (pos < tokens.size() && !"times".equals(tokens.get(pos).value)) {
+            countExpr.append(tokens.get(pos).value).append(" ");
+            pos++;
+        }
+        if (!peek("times")) {
+            throw new RuntimeException("Syntax error at line " + line + ": Expected 'times' after repeat count");
+        }
+        pos++; // skip 'times'
+        List<Instruction> body = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+        return new RepeatInstruction(countExpr.toString().trim(), body, line);
+    }
+
+    // Handler for parsing function definition
+    private Instruction parseFunctionDefinition(int line) {
+        pos++;
+        String functionName = expectIdentifier();
+        List<String> parameters = parseIdentifiersOrValuesUntil("INDENT", "DEDENT", "NEWLINE");
+        List<Instruction> body = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+        if (body.isEmpty()) {
+            throw new RuntimeException("Syntax error at line " + line + ": Function definition requires an indented block");
+        }
+        return new FunctionDefinitionInstruction(functionName, parameters, body, line);
+    }
+
+    // Handler for parsing function call
+    private Instruction parseFunctionCall(int line) {
+        pos++;
+        String functionName = expectIdentifier();
+        List<String> arguments = new ArrayList<>();
+        if (peek("with")) {
+            pos++;
+            arguments = parseIdentifiersOrValuesUntil("INDENT", "DEDENT", "NEWLINE", "into");
+        }
+        String intoVariable = null;
+        if (peek("into")) {
+            pos++;
+            if (pos < tokens.size() && tokens.get(pos).value.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                intoVariable = tokens.get(pos).value;
+                pos++;
+            } else {
+                throw new RuntimeException("Syntax error at line " + line + ": Expected variable name after 'into'");
+            }
+        }
+        return new FunctionCallInstruction(functionName, arguments, intoVariable, line);
+    }
+
+    // Handler for parsing return
+    private Instruction parseReturn(int line) {
+        pos++;
+        String expr = "";
+        if (pos < tokens.size() && !tokens.get(pos).value.equals("INDENT") && !tokens.get(pos).value.equals("DEDENT") && !tokens.get(pos).value.equals("NEWLINE")) {
+            expr = tokens.get(pos).value;
+            pos++;
+        }
+        return new ReturnInstruction(expr, line);
     }
 
     private Instruction parseInstruction() {
@@ -263,170 +287,125 @@ public class Parser {
         Tokenizer.Token token = tokens.get(pos);
         String value = token.value;
         int line = token.lineNumber;
-        // Variable declaration: variable x
-        if ("variable".equals(value)) {
-            pos++;
-            String name = expectIdentifier();
-            if (peek("equal") || peek("equals")) {
-                pos++;
-                // Check for list literal
-                if (peek("LIST_START")) {
+        // Use registry/factory for all mapped instructions
+        if (instructionFactory.isRegistered(value)) {
+            // Gather arguments for the instruction context
+            String identifier = null;
+            Object val = null;
+            switch (value) {
+                case "variable":
                     pos++;
-                    List<String> items = new ArrayList<>();
-                    while (!peek("LIST_END")) {
-                        items.add(expectValue());
+                    identifier = expectIdentifier();
+                    if (peek("equal") || peek("equals")) {
+                        pos++;
+                        if (peek("LIST_START")) {
+                            pos++;
+                            List<String> items = new ArrayList<>();
+                            while (!peek("LIST_END")) items.add(expectValue());
+                            pos++; // skip LIST_END
+                            val = new ListValue(items);
+                        } else {
+                            val = expectValue();
+                        }
                     }
-                    expect("LIST_END");
-                    return new VariableInstruction(name, new ListValue(items), line);
-                } else {
-                    String val = expectValue();
-                    return new VariableInstruction(name, val, line);
-                }
+                    break;
+                case "set":
+                    pos++;
+                    identifier = expectIdentifier();
+                    expect("to");
+                    if (peek("LIST_START")) {
+                        pos++;
+                        List<String> items = new ArrayList<>();
+                        while (!peek("LIST_END")) items.add(expectValue());
+                        pos++; // skip LIST_END
+                        val = new ListValue(items);
+                    } else {
+                        val = expectValue();
+                    }
+                    break;
+                case "write":
+                    pos++;
+                    val = expectValue();
+                    expect("in");
+                    identifier = expectIdentifier();
+                    break;
+                case "ask":
+                    pos++;
+                    val = expectValue();
+                    expect("and");
+                    expect("store");
+                    expect("in");
+                    identifier = expectIdentifier();
+                    break;
+                case "create":
+                    pos++;
+                    expect("file");
+                    expect("as");
+                    identifier = expectValue();
+                    break;
+                case "append":
+                    pos++;
+                    val = expectValue();
+                    expect("to");
+                    identifier = expectIdentifier();
+                    break;
+                case "delete":
+                    if (peekNext("file")) {
+                        pos++;
+                        pos++;
+                        identifier = expectValue();
+                    }
+                    break;
+                case "log":
+                    pos++;
+                    val = expectValue();
+                    break;
             }
-            return new VariableInstruction(name, null, line);
+            return instructionFactory.create(value, new InstructionContext(identifier, val, line));
         }
-        // Assignment: set x to y
-        if ("set".equals(value)) {
-            pos++;
-            String name = expectIdentifier();
-            expect("to");
-            // Check for list literal
-            if (peek("LIST_START")) {
-                pos++;
-                List<String> items = new ArrayList<>();
-                while (!peek("LIST_END")) {
-                    items.add(expectValue());
-                }
-                expect("LIST_END");
-                return new AssignmentInstruction(name, new ListValue(items), line);
-            } else {
-                String val = expectValue();
-                return new AssignmentInstruction(name, val, line);
-            }
-        }
-        // If: if x is greater than 10 then ... otherwise ...
-        if ("if".equals(value)) {
-            pos++;
-            StringBuilder cond = new StringBuilder();
-            // Gather condition until 'then'
-            while (pos < tokens.size() && !"then".equals(tokens.get(pos).value)) {
-                cond.append(tokens.get(pos).value).append(" ");
-                pos++;
-            }
-            if (peek("then")) pos++;
-            // Parse then-instructions (all lines until 'otherwise' or end)
-            List<Instruction> thenInstrs = new ArrayList<>();
-            while (pos < tokens.size() && !"otherwise".equals(tokens.get(pos).value)) {
-                thenInstrs.add(parseInstruction());
-            }
-            // Parse else-instructions if 'otherwise' is present
-            List<Instruction> elseInstrs = new ArrayList<>();
-            if (peek("otherwise")) {
-                pos++;
-                while (pos < tokens.size()) {
-                    elseInstrs.add(parseInstruction());
-                }
-            }
-            return new IfInstruction(cond.toString().trim(), thenInstrs, elseInstrs, line);
-        }
-        // Ask: ask "..." and store in name
-        if ("ask".equals(value)) {
-            pos++;
-            String prompt = expectValue();
-            expect("and");
-            expect("store");
-            expect("in");
-            String var = expectIdentifier();
-            return new AskInstruction(prompt, var, line);
-        }
-        // Write: write "Hello" in file.txt
-        if ("write".equals(value)) {
-            pos++;
-            String content = expectValue();
-            expect("in");
-            String file = expectIdentifier();
-            return new WriteInstruction(content, file, line);
-        }
-        // Create file: create file as "filename.txt"
-        if ("create".equals(value)) {
-            pos++;
-            expect("file");
-            expect("as");
-            String file = expectValue();
-            return new CreateFileInstruction(file, line);
-        }
-        // Read file: read file <file> into <variable>
         if ("read".equals(value) && peekNext("file")) {
-            pos++; // read
-            pos++; // file
+            pos++;
+            pos++;
             String fileName = expectValue();
             expect("into");
             String variableName = expectIdentifier();
             return new ReadFileInstruction(fileName, variableName, line);
         }
-        // Append to file: append <text> to <file>
-        if ("append".equals(value)) {
-            pos++;
-            String text = expectValue();
-            expect("to");
-            String fileName = expectIdentifier();
-            return new AppendToFileInstruction(text, fileName, line);
-        }
-        // Delete file: delete file <file>
-        if ("delete".equals(value) && peekNext("file")) {
-            pos++; // delete
-            pos++; // file
-            String fileName = expectValue();
-            return new DeleteFileInstruction(fileName, line);
-        }
-        // List files in directory: list files in <directory> into <variable>
-        if ("list".equals(value) && peekNext("files")) {
-            pos++; // list
-            pos++; // files
-            expect("in");
-            String directory = expectValue();
-            expect("into");
-            String variableName = expectIdentifier();
-            return new ListDirectoryInstruction(directory, variableName, line);
-        }
-        // Attempt: attempt ... if that fails ...
-        if ("attempt".equals(value)) {
-            pos++;
-            // For MVP, no block parsing, just stub
-            return new AttemptInstruction(new ArrayList<>(), new ArrayList<>(), line);
-        }
-        // Logging: log <message>
-        if ("log".equals(value)) {
-            pos++;
-            String message = expectValue();
-            return new LogInstruction(message, line);
-        }
-        // File copying: copy file <source> to <destination>
-        if ("copy".equals(value) && peekNext("file")) {
-            pos++; // copy
-            pos++; // file
-            String source = expectValue();
-            expect("to");
-            String destination = expectValue();
-            return new CopyFileInstruction(source, destination, line);
-        }
-        if ("return".equals(value)) {
-            pos++;
-            String expr = "";
-            if (pos < tokens.size() && !tokens.get(pos).value.equals("INDENT") && !tokens.get(pos).value.equals("DEDENT") && !tokens.get(pos).value.equals("NEWLINE")) {
-                expr = tokens.get(pos).value;
-                pos++;
-            }
-            return new ReturnInstruction(expr, line);
-        }
         throw new RuntimeException("Syntax error at line " + line + ": Unknown instruction '" + value + "'");
+    }
+
+    // Helper to parse a value or a list value (e.g. a, b and c)
+    private Object parseValueOrList() {
+        List<String> items = new ArrayList<>();
+        while (pos < tokens.size()) {
+            String val = tokens.get(pos).value;
+            if (val.equals(",")) {
+                pos++;
+                continue;
+            }
+            if (val.equals("and")) {
+                pos++;
+                if (pos < tokens.size()) {
+                    items.add(tokens.get(pos).value);
+                    pos++;
+                }
+                break;
+            }
+            // Stop at block or next instruction
+            if (val.equals("INDENT") || val.equals("DEDENT") || val.equals("NEWLINE") || val.equals("to") || val.equals("in") || val.equals("as") || val.equals("file")) {
+                break;
+            }
+            items.add(val);
+            pos++;
+        }
+        if (items.size() == 1) return items.get(0);
+        return new ListValue(items);
     }
 
     private boolean peek(String expected) {
         return pos < tokens.size() && tokens.get(pos).value.equals(expected);
     }
 
-    // Utility: peek next token value
     private boolean peekNext(String expected) {
         return (pos + 1) < tokens.size() && tokens.get(pos + 1).value.equals(expected);
     }
@@ -438,12 +417,14 @@ public class Parser {
         }
         pos++;
     }
+
     private String expectIdentifier() {
         if (pos >= tokens.size()) throw new RuntimeException("Unexpected end of input");
         String val = tokens.get(pos).value;
         pos++;
         return val;
     }
+
     private String expectValue() {
         if (pos >= tokens.size()) throw new RuntimeException("Unexpected end of input");
         String val = tokens.get(pos).value;
@@ -451,7 +432,6 @@ public class Parser {
         return val;
     }
 
-    // Add BlockInstruction and OtherwiseBlockInstruction for block flattening
     static class BlockInstruction implements Instruction {
         private final List<Instruction> block;
         private final int lineNumber;
@@ -462,6 +442,7 @@ public class Parser {
         public List<Instruction> getBlock() { return block; }
         public int getLineNumber() { return lineNumber; }
     }
+
     static class OtherwiseBlockInstruction implements Instruction {
         private final List<Instruction> block;
         private final int lineNumber;

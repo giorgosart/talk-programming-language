@@ -6,13 +6,15 @@ import java.nio.file.Files;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WriteInstructionExecutorTest {
+    private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+
     @Test
     void testWriteLiteralToFile() throws Exception {
         String fileName = "test_output.txt";
         File file = new File(fileName);
         if (file.exists()) file.delete();
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         WriteInstruction wi = new WriteInstruction("Hello", fileName, 1);
         exec.execute(wi);
         String content = Files.readString(file.toPath());
@@ -27,7 +29,7 @@ public class WriteInstructionExecutorTest {
         if (file.exists()) file.delete();
         RuntimeContext ctx = new RuntimeContext();
         ctx.setVariable("x", "World");
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         WriteInstruction wi = new WriteInstruction("x", fileName, 2);
         exec.execute(wi);
         String content = Files.readString(file.toPath());

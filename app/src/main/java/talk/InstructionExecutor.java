@@ -1,20 +1,15 @@
 package talk;
 
 import java.util.List;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Scanner;
-import talk.LogInstruction;
-import talk.CopyFileInstruction;
+import java.io.File;
+import java.io.InputStream;
 
 public class InstructionExecutor {
     private final RuntimeContext context;
     private final ExpressionResolver resolver;
-    private static final Scanner scanner = new java.util.Scanner(System.in);
+    private final Scanner scanner;
 
     // Custom exception to signal early return from a function
     public static class FunctionReturn extends RuntimeException {
@@ -24,8 +19,13 @@ public class InstructionExecutor {
     }
 
     public InstructionExecutor(RuntimeContext context) {
+        this(context, System.in);
+    }
+
+    public InstructionExecutor(RuntimeContext context, InputStream in) {
         this.context = context;
         this.resolver = new ExpressionResolver(context);
+        this.scanner = new Scanner(in);
     }
 
     public Object executeWithReturn(Instruction instruction) {
@@ -69,14 +69,11 @@ public class InstructionExecutor {
             WriteInstruction wi = (WriteInstruction) instruction;
             Object content = resolver.resolve(wi.getContent());
             String fileName = wi.getFileName();
-            File file = new File(fileName);
             try {
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-                try (FileWriter writer = new FileWriter(file, true)) {
-                    writer.write(String.valueOf(content));
-                    writer.write(System.lineSeparator());
+                if (FileUtils.fileExists(fileName)) {
+                    FileUtils.appendToFile(fileName, String.valueOf(content) + System.lineSeparator());
+                } else {
+                    FileUtils.writeFile(fileName, String.valueOf(content) + System.lineSeparator());
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write to file '" + fileName + "' (line " + wi.getLineNumber() + ")", e);
@@ -84,14 +81,11 @@ public class InstructionExecutor {
         } else if (instruction instanceof CreateFileInstruction) {
             CreateFileInstruction cfi = (CreateFileInstruction) instruction;
             String fileName = cfi.getFileName();
-            Path path = Paths.get(fileName);
             try {
-                if (!Files.exists(path)) {
-                    Files.createFile(path);
+                if (!FileUtils.fileExists(fileName)) {
+                    FileUtils.writeFile(fileName, "");
                 }
-                if (!Files.isWritable(path)) {
-                    throw new RuntimeException("File '" + fileName + "' is not writable (line " + cfi.getLineNumber() + ")");
-                }
+                // No explicit isWritable check; rely on IOException
             } catch (Exception e) {
                 throw new RuntimeException("Failed to create file '" + fileName + "' (line " + cfi.getLineNumber() + ")", e);
             }
@@ -120,18 +114,20 @@ public class InstructionExecutor {
             // Store as Integer if numeric, else as String
             if (input != null && ai.getVariableName().toLowerCase().contains("num") && input.matches("-?\\d+")) {
                 context.setVariable(ai.getVariableName(), Integer.parseInt(input));
-                System.out.println("[DEBUG] Stored variable '" + ai.getVariableName() + "' as Integer: " + input);
             } else {
                 context.setVariable(ai.getVariableName(), input);
-                System.out.println("[DEBUG] Stored variable '" + ai.getVariableName() + "' as String: " + input);
             }
         } else if (instruction instanceof AttemptInstruction) {
             AttemptInstruction ai = (AttemptInstruction) instruction;
+            boolean failed = false;
             try {
                 for (Instruction instr : ai.getTryBlock()) {
                     execute(instr);
                 }
             } catch (Exception e) {
+                failed = true;
+            }
+            if (failed) {
                 for (Instruction instr : ai.getCatchBlock()) {
                     execute(instr);
                 }
@@ -264,7 +260,7 @@ public class InstructionExecutor {
             String fileName = rfi.getFileName();
             String variableName = rfi.getVariableName();
             try {
-                String content = Files.readString(Paths.get(fileName));
+                String content = FileUtils.readFile(fileName);
                 context.setVariable(variableName, content);
             } catch (IOException e) {
                 throw new RuntimeException("Failed to read file '" + fileName + "' (line " + rfi.getLineNumber() + ")", e);
@@ -273,29 +269,18 @@ public class InstructionExecutor {
             AppendToFileInstruction afi = (AppendToFileInstruction) instruction;
             Object content = resolver.resolve(afi.getText());
             String fileName = afi.getFileName();
-            File file = new File(fileName);
-            System.out.println("[DEBUG] Appending to file: " + file.getAbsolutePath());
             try {
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-                try (FileWriter writer = new FileWriter(file, true)) {
-                    writer.write(String.valueOf(content));
-                    writer.write(System.lineSeparator());
-                }
+                FileUtils.appendToFile(fileName, String.valueOf(content) + System.lineSeparator());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to append to file '" + fileName + "' (line " + afi.getLineNumber() + ")", e);
             }
         } else if (instruction instanceof DeleteFileInstruction) {
             DeleteFileInstruction dfi = (DeleteFileInstruction) instruction;
             String fileName = dfi.getFileName();
-            File file = new File(fileName);
-            if (file.exists()) {
-                if (!file.delete()) {
-                    throw new RuntimeException("Failed to delete file '" + fileName + "' (line " + dfi.getLineNumber() + ")");
-                }
-            } else {
-                throw new RuntimeException("File '" + fileName + "' does not exist (line " + dfi.getLineNumber() + ")");
+            try {
+                FileUtils.deleteFile(fileName);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete file '" + fileName + "' (line " + dfi.getLineNumber() + ")", e);
             }
         } else if (instruction instanceof ListDirectoryInstruction) {
             ListDirectoryInstruction ldi = (ListDirectoryInstruction) instruction;
@@ -311,23 +296,24 @@ public class InstructionExecutor {
             context.setVariable(variableName, fileList);
         } else if (instruction instanceof LogInstruction) {
             LogInstruction li = (LogInstruction) instruction;
-            String message = li.getMessage();
-            // Write to default log file (append mode)
             String logFile = "debug.log";
-            try (FileWriter writer = new FileWriter(logFile, true)) {
-                writer.write(message);
-                writer.write(System.lineSeparator());
+            try {
+                FileUtils.appendToFile(logFile, li.getMessage() + System.lineSeparator());
             } catch (IOException e) {
-                throw new RuntimeException("Failed to write to log file '" + logFile + "' (line " + li.getLineNumber() + ")", e);
+                throw new RuntimeException("Failed to write log (line " + li.getLineNumber() + ")", e);
             }
         } else if (instruction instanceof CopyFileInstruction) {
             CopyFileInstruction cfi = (CopyFileInstruction) instruction;
-            java.nio.file.Path src = java.nio.file.Paths.get(cfi.getSource());
-            java.nio.file.Path dest = java.nio.file.Paths.get(cfi.getDestination());
+            String src = cfi.getSource();
+            String dest = cfi.getDestination();
             try {
-                java.nio.file.Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            } catch (java.io.IOException e) {
-                throw new RuntimeException("Failed to copy file from '" + cfi.getSource() + "' to '" + cfi.getDestination() + "' (line " + cfi.getLineNumber() + ")");
+                java.nio.file.Files.copy(
+                    java.nio.file.Paths.get(src),
+                    java.nio.file.Paths.get(dest),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to copy file from '" + src + "' to '" + dest + "' (line " + cfi.getLineNumber() + ")", e);
             }
         } else {
             throw new UnsupportedOperationException("Instruction type not supported in this phase");

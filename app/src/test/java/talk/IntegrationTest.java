@@ -9,6 +9,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class IntegrationTest {
+    private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+
     @Test
     void testFullScriptExecution() throws Exception {
         // Simulate a .talk script: variable x equal 5; if x is greater than 3 then set x to 10; write x in out.txt
@@ -22,7 +24,7 @@ public class IntegrationTest {
         Parser parser = new Parser(tokens);
         List<Instruction> instructions = parser.parse();
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         for (Instruction instr : instructions) {
             exec.execute(instr);
         }
@@ -45,7 +47,7 @@ public class IntegrationTest {
             1
         );
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
         exec.execute(attempt);
         assertEquals(42, ctx.getVariable("y"));
     }
