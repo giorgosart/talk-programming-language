@@ -1,0 +1,57 @@
+# String Utilities Example (.talk)
+# This file demonstrates the string utilities introduced in Phase 15
+
+# Example setup
+variable message equals "Hello, World!"
+write "Original message: Hello, World!" in string_test.log
+
+# 28.0 Core String Operations
+set uppercase_message to uppercase of message
+write uppercase_message in string_test.log
+
+set lowercase_message to lowercase of message
+write lowercase_message in string_test.log
+
+set trimmed_message to trim of "  Hello, World!  "
+write trimmed_message in string_test.log
+
+set message_length to length of message
+write "Length of message is:" in string_test.log
+write message_length in string_test.log
+
+# 29.0 Substring and Replace
+set part to substring of message from 1 to 5
+write part in string_test.log
+
+set new_message to replace "World" with "Talk" in message
+write new_message in string_test.log
+
+# 30.0 Matching Conditions
+if message contains "Hello" then
+    write "Contains Hello: true" in string_test.log
+    
+if message starts with "Hello" then
+    write "Starts with Hello: true" in string_test.log
+    
+if message ends with "!" then
+    write "Ends with !: true" in string_test.log
+
+# Split Support
+set words to split message by ", "
+write "Split first part:" in string_test.log
+set first_part to item 1 in words
+write first_part in string_test.log
+write "Split second part:" in string_test.log
+set second_part to item 2 in words
+write second_part in string_test.log
+
+# Combined operations example
+set text to "  Mixed CASE string with SPACES  "
+set processed to lowercase of trim of text
+write processed in string_test.log
+
+# Replace with variable example
+set search_term to "World"
+set replacement to "Universe"
+set cosmic_message to replace search_term with replacement in message
+write cosmic_message in string_test.log

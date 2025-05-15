@@ -1,6 +1,9 @@
 package talk;
 
 import org.junit.jupiter.api.Test;
+
+import talk.util.ErrorFormatter;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ErrorFormatterTest {

@@ -1,0 +1,64 @@
+# Arithmetic Operations Example (.talk)
+# This file demonstrates the arithmetic operations introduced in Phase 16
+
+# Setup some variables
+variable x equals 10
+variable y equals 5
+variable z equals 2.5
+
+# Core Arithmetic Operations
+variable sum equals x plus y
+write "Sum (x + y): " in arithmetic_test.log
+write sum in arithmetic_test.log
+
+variable difference equals x minus y
+write "Difference (x - y): " in arithmetic_test.log
+write difference in arithmetic_test.log
+
+variable product equals x times y
+write "Product (x * y): " in arithmetic_test.log
+write product in arithmetic_test.log
+
+variable quotient equals x divided by y
+write "Quotient (x / y): " in arithmetic_test.log
+write quotient in arithmetic_test.log
+
+variable remainder equals x modulo 3
+write "Remainder (x % 3): " in arithmetic_test.log
+write remainder in arithmetic_test.log
+
+# Extended Math Operations
+variable neg equals negative of x
+write "Negative (-x): " in arithmetic_test.log
+write neg in arithmetic_test.log
+
+variable squared equals x to the power of 2
+write "Squared (x^2): " in arithmetic_test.log
+write squared in arithmetic_test.log
+
+variable abs_value equals absolute of -15
+write "Absolute (|-15|): " in arithmetic_test.log
+write abs_value in arithmetic_test.log
+
+variable rounded equals round 4.7
+write "Round (4.7): " in arithmetic_test.log
+write rounded in arithmetic_test.log
+
+variable floor_value equals floor 4.7
+write "Floor (4.7): " in arithmetic_test.log
+write floor_value in arithmetic_test.log
+
+variable ceil_value equals ceil 4.2
+write "Ceil (4.2): " in arithmetic_test.log
+write ceil_value in arithmetic_test.log
+
+# Complex expression
+variable result equals x plus y times z minus 2
+write "Complex expression (x + y * z - 2): " in arithmetic_test.log
+write result in arithmetic_test.log
+
+# Type coercion example
+variable num_str equals "20"
+variable coerced equals num_str plus 5
+write "Type coercion ('20' + 5): " in arithmetic_test.log
+write coerced in arithmetic_test.log

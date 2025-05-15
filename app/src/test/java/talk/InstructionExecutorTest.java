@@ -1,18 +1,46 @@
 package talk;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.ArrayList;
 
+import talk.core.Instruction;
+import talk.core.RuntimeContext;
+import talk.exception.FunctionReturn;
+import talk.expression.ExpressionResolver;
+import talk.expression.ListValue;
+import talk.instruction.AppendToFileInstruction;
+import talk.instruction.AssignmentInstruction;
+import talk.instruction.CopyFileInstruction;
+import talk.instruction.DeleteFileInstruction;
+import talk.instruction.FunctionCallInstruction;
+import talk.instruction.FunctionDefinitionInstruction;
+import talk.instruction.ListDirectoryInstruction;
+import talk.instruction.LogInstruction;
+import talk.instruction.ReadFileInstruction;
+import talk.instruction.RepeatInstruction;
+import talk.instruction.ReturnInstruction;
+import talk.instruction.VariableInstruction;
+import talk.runtime.InstructionExecutor;
+
 public class InstructionExecutorTest {
     private static java.io.InputStream dummyIn = new java.io.ByteArrayInputStream("dummy\ndummy\ndummy\n".getBytes());
+    private MockFileSystem mockFileSystem;
+    private MockLogger mockLogger;
+    
+    @BeforeEach
+    void setUp() {
+        mockFileSystem = new MockFileSystem();
+        mockLogger = new MockLogger();
+    }
 
     @Test
     void testVariableDeclaration() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         VariableInstruction vi = new VariableInstruction("x", null, 1);
         exec.execute(vi);
         assertTrue(ctx.hasVariable("x"));
@@ -22,7 +50,7 @@ public class InstructionExecutorTest {
     @Test
     void testVariableDeclarationWithValue() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         VariableInstruction vi = new VariableInstruction("x", "10", 2);
         exec.execute(vi);
         assertEquals("10", ctx.getVariable("x"));
@@ -31,7 +59,7 @@ public class InstructionExecutorTest {
     @Test
     void testAssignment() {
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         exec.execute(new VariableInstruction("x", null, 1));
         exec.execute(new AssignmentInstruction("x", "42", 2));
         assertEquals("42", ctx.getVariable("x"));
@@ -193,64 +221,88 @@ public class InstructionExecutorTest {
 
     @Test
     void testReadFileInstruction() throws Exception {
-        // Prepare a file with known content
+        // Setup mock file system with test content
         String fileName = "test_readfile.txt";
         String fileContent = "Hello, file!\nSecond line.";
-        java.nio.file.Files.write(java.nio.file.Paths.get(fileName), fileContent.getBytes());
-        try {
-            RuntimeContext ctx = new RuntimeContext();
-            InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
-            ReadFileInstruction rfi = new ReadFileInstruction(fileName, "result", 1);
-            exec.execute(rfi);
-            assertTrue(ctx.hasVariable("result"));
-            assertEquals(fileContent, ctx.getVariable("result"));
-        } finally {
-            java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(fileName));
-        }
+        mockFileSystem.writeFile(fileName, fileContent);
+        
+        RuntimeContext ctx = new RuntimeContext();
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
+        ReadFileInstruction rfi = new ReadFileInstruction(fileName, "result", 1);
+        exec.execute(rfi);
+        
+        assertTrue(ctx.hasVariable("result"));
+        assertEquals(fileContent, ctx.getVariable("result"));
+        assertTrue(mockFileSystem.getOperations().contains("readFile:" + fileName));
     }
 
     @Test
     void testAppendToFileInstruction() throws Exception {
         String fileName = "test_appendfile.txt";
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(fileName));
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
+        
+        // First append
         AppendToFileInstruction afi = new AppendToFileInstruction("hello world", fileName, 1);
         exec.execute(afi);
-        String content = java.nio.file.Files.readString(java.nio.file.Paths.get(fileName));
+        
+        assertTrue(mockFileSystem.getFiles().containsKey(fileName));
+        String content = mockFileSystem.getFiles().get(fileName);
         assertTrue(content.contains("hello world"));
-        // Append again
+        
+        // Second append
         exec.execute(new AppendToFileInstruction("second line", fileName, 2));
-        String content2 = java.nio.file.Files.readString(java.nio.file.Paths.get(fileName));
+        
+        String content2 = mockFileSystem.getFiles().get(fileName);
         assertTrue(content2.contains("hello world"));
         assertTrue(content2.contains("second line"));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(fileName));
+        
+        // Verify operations
+        boolean hasAppendOperation = false;
+        
+        for (String op : mockFileSystem.getOperations()) {
+            if (op.equals("appendToFile:" + fileName)) {
+                hasAppendOperation = true;
+                break;
+            }
+        }
+        
+        assertTrue(hasAppendOperation, "Should have at least one append operation");
     }
 
     @Test
     void testDeleteFileInstruction() throws Exception {
         String fileName = "test_deletefile.txt";
-        java.nio.file.Files.write(java.nio.file.Paths.get(fileName), "delete me".getBytes());
-        assertTrue(new java.io.File(fileName).exists());
+        String fileContent = "delete me";
+        
+        // Setup mock file system with a file to delete
+        mockFileSystem.writeFile(fileName, fileContent);
+        assertTrue(mockFileSystem.getFiles().containsKey(fileName));
+        
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         DeleteFileInstruction dfi = new DeleteFileInstruction(fileName, 1);
         exec.execute(dfi);
-        assertFalse(new java.io.File(fileName).exists());
+        
+        // Verify file was deleted
+        assertFalse(mockFileSystem.getFiles().containsKey(fileName));
+        assertTrue(mockFileSystem.getOperations().contains("deleteFile:" + fileName));
     }
 
     @Test
     void testListDirectoryInstruction() throws Exception {
         String dirName = "test_dir";
-        java.nio.file.Files.createDirectories(java.nio.file.Paths.get(dirName));
-        String file1 = dirName + "/file1.txt";
-        String file2 = dirName + "/file2.txt";
-        java.nio.file.Files.write(java.nio.file.Paths.get(file1), "abc".getBytes());
-        java.nio.file.Files.write(java.nio.file.Paths.get(file2), "def".getBytes());
+        List<String> fileList = List.of("file1.txt", "file2.txt");
+        
+        // Setup mock file system with a directory containing files
+        mockFileSystem.setupDirectory(dirName, fileList);
+        
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         ListDirectoryInstruction ldi = new ListDirectoryInstruction(dirName, "files", 1);
         exec.execute(ldi);
+        
+        // Verify directory listing
         assertTrue(ctx.hasVariable("files"));
         Object val = ctx.getVariable("files");
         assertTrue(val instanceof ListValue);
@@ -258,43 +310,44 @@ public class InstructionExecutorTest {
         List<String> items = list.asList();
         assertTrue(items.contains("file1.txt"));
         assertTrue(items.contains("file2.txt"));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(file1));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(file2));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(dirName));
+        assertTrue(mockFileSystem.getOperations().contains("listDirectory:" + dirName));
     }
 
     @Test
     void testLogInstruction() throws Exception {
-        String logFile = "debug.log";
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(logFile));
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
+        
+        // Execute log instructions
         LogInstruction li = new LogInstruction("Hello log!", 1);
         exec.execute(li);
-        String content = java.nio.file.Files.readString(java.nio.file.Paths.get(logFile));
-        assertTrue(content.contains("Hello log!"));
-        // Append again
         exec.execute(new LogInstruction("Second entry", 2));
-        String content2 = java.nio.file.Files.readString(java.nio.file.Paths.get(logFile));
-        assertTrue(content2.contains("Hello log!"));
-        assertTrue(content2.contains("Second entry"));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(logFile));
+        
+        // Verify log messages
+        List<String> logMessages = mockLogger.getLogMessages();
+        assertFalse(logMessages.isEmpty());
+        assertTrue(logMessages.stream().anyMatch(msg -> msg.contains("Hello log!")));
+        assertTrue(logMessages.stream().anyMatch(msg -> msg.contains("Second entry")));
     }
 
     @Test
     void testCopyFileInstruction() throws Exception {
         String srcFile = "test_src.txt";
         String destFile = "test_dest.txt";
-        java.nio.file.Files.write(java.nio.file.Paths.get(srcFile), "copy me".getBytes());
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(destFile));
+        String fileContent = "copy me";
+        
+        // Setup mock file system with source file
+        mockFileSystem.writeFile(srcFile, fileContent);
+        
         RuntimeContext ctx = new RuntimeContext();
-        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn);
+        InstructionExecutor exec = new InstructionExecutor(ctx, dummyIn, mockFileSystem, mockLogger);
         CopyFileInstruction cfi = new CopyFileInstruction(srcFile, destFile, 1);
         exec.execute(cfi);
-        String content = java.nio.file.Files.readString(java.nio.file.Paths.get(destFile));
-        assertEquals("copy me", content);
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(srcFile));
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(destFile));
+        
+        // Verify destination file has the content
+        assertTrue(mockFileSystem.getFiles().containsKey(destFile));
+        assertEquals(fileContent, mockFileSystem.getFiles().get(destFile));
+        assertTrue(mockFileSystem.getOperations().contains("copyFile:" + srcFile + ":" + destFile));
     }
 
     @Test
@@ -340,8 +393,8 @@ public class InstructionExecutorTest {
         // Function: return x + 1
         ReturnInstruction ret = new ReturnInstruction("x + 1", 2);
         // Should throw FunctionReturn with correct value
-        Exception ex = assertThrows(InstructionExecutor.FunctionReturn.class, () -> exec.execute(ret));
-        assertTrue(ex instanceof InstructionExecutor.FunctionReturn);
+        Exception ex = assertThrows(FunctionReturn.class, () -> exec.execute(ret));
+        assertTrue(ex instanceof FunctionReturn);
     }
 
     @Test
@@ -361,7 +414,7 @@ public class InstructionExecutorTest {
         Object result = null;
         try {
             result = exec.executeWithReturn(call);
-        } catch (InstructionExecutor.FunctionReturn fr) {
+        } catch (FunctionReturn fr) {
             result = fr.getValue();
         }
         assertEquals(6, result); // Should be 5 + 1 = 6

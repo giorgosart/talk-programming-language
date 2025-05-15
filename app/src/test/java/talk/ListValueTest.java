@@ -2,6 +2,8 @@ package talk;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import talk.exception.TalkValueException;
+import talk.expression.ListValue;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,14 +19,14 @@ public class ListValueTest {
     @Test
     void testGetInvalidIndexLow() {
         ListValue lv = new ListValue(List.of("x", "y"));
-        Exception e = assertThrows(IndexOutOfBoundsException.class, () -> lv.get(0));
+        Exception e = assertThrows(TalkValueException.class, () -> lv.get(0));
         assertTrue(e.getMessage().contains("List index out of bounds"));
     }
 
     @Test
     void testGetInvalidIndexHigh() {
         ListValue lv = new ListValue(List.of("x", "y"));
-        Exception e = assertThrows(IndexOutOfBoundsException.class, () -> lv.get(3));
+        Exception e = assertThrows(TalkValueException.class, () -> lv.get(3));
         assertTrue(e.getMessage().contains("List index out of bounds"));
     }
 

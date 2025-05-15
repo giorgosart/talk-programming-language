@@ -1,0 +1,8 @@
+# Simple test for string utilities
+variable message equals "Hello, World!"
+variable test_upper equals "HELLO"
+variable test_lower equals "hello"
+
+# Try to use the utilities
+set result to uppercase of test_lower
+write result in simple_test.log

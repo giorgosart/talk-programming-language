@@ -1,6 +1,13 @@
 package talk;
 
 import org.junit.jupiter.api.Test;
+
+import talk.core.RuntimeContext;
+import talk.instruction.AssignmentInstruction;
+import talk.instruction.IfInstruction;
+import talk.instruction.VariableInstruction;
+import talk.runtime.InstructionExecutor;
+
 import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.*;
 

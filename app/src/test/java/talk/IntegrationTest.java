@@ -1,6 +1,16 @@
 package talk;
 
 import org.junit.jupiter.api.Test;
+
+import talk.core.Instruction;
+import talk.Parser;
+import talk.core.RuntimeContext;
+import talk.core.Tokenizer;
+import talk.instruction.AssignmentInstruction;
+import talk.instruction.AttemptInstruction;
+import talk.instruction.VariableInstruction;
+import talk.runtime.InstructionExecutor;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Arrays;

@@ -1,0 +1,85 @@
+# Date Utility Examples (.talk language)
+
+# Basic date functions
+variable today_date
+set today_date to today
+
+variable current_datetime
+set current_datetime to now
+
+# Display the dates
+write "Today's date is: " in console.txt
+write today_date in console.txt
+write "Current date and time: " in console.txt
+write current_datetime in console.txt
+
+# Format a date
+variable formatted_date
+set formatted_date to format date today as "yyyy/MM/dd"
+write "Formatted date: " in console.txt
+write formatted_date in console.txt
+
+# Date arithmetic 
+variable tomorrow
+set tomorrow to add 1 days to today
+write "Tomorrow is: " in console.txt
+write tomorrow in console.txt
+
+variable last_week
+set last_week to subtract 7 days from today
+write "Last week was: " in console.txt
+write last_week in console.txt
+
+# Date difference
+variable days_passed
+set days_passed to difference in days between last_week and today
+write "Days passed since last week: " in console.txt
+write days_passed in console.txt
+
+# Day of week
+variable weekday
+set weekday to day of week of today
+write "Today is a: " in console.txt
+write weekday in console.txt
+
+# Parse a date string
+variable birthday
+set birthday to parse date "2000-01-01"
+write "Parsed birthday: " in console.txt
+write birthday in console.txt
+
+# Date comparison with if conditions
+if birthday is before today then
+    write "Birthday is in the past" in console.txt
+
+if today is after birthday then
+    write "Today is after birthday" in console.txt
+
+# More complex example with date calculations
+variable meeting_date
+set meeting_date to add 14 days to today
+variable meeting_formatted
+set meeting_formatted to format date meeting_date as "EEEE, MMMM d, yyyy"
+write "The meeting will be held on: " in console.txt
+write meeting_formatted in console.txt
+
+variable days_until_meeting
+set days_until_meeting to difference in days between today and meeting_date
+write "Days until the meeting: " in console.txt
+write days_until_meeting in console.txt
+
+# Working with multiple dates
+variable deadline
+set deadline to parse date "2025-12-31"
+variable days_to_deadline
+set days_to_deadline to difference in days between today and deadline
+write "Days remaining until the deadline: " in console.txt
+write days_to_deadline in console.txt
+
+if deadline is after today then
+    write "The deadline is in the future" in console.txt
+    
+    variable midpoint_date
+    set midpoint_date to add (days_to_deadline / 2) days to today
+    write "Halfway to the deadline will be on: " in console.txt
+    write midpoint_date in console.txt

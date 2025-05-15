@@ -1,6 +1,14 @@
 package talk;
 
 import org.junit.jupiter.api.*;
+
+import talk.core.Instruction;
+import talk.Parser;
+import talk.core.RuntimeContext;
+import talk.core.Tokenizer;
+import talk.instruction.AttemptInstruction;
+import talk.runtime.InstructionExecutor;
+
 import java.io.*;
 import java.nio.file.Files;
 import static org.junit.jupiter.api.Assertions.*;

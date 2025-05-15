@@ -1,6 +1,15 @@
 package talk;
 
 import org.junit.jupiter.api.*;
+
+import talk.core.Instruction;
+import talk.core.RuntimeContext;
+import talk.expression.ExpressionResolver;
+import talk.expression.ListValue;
+import talk.instruction.RepeatInstruction;
+import talk.instruction.WriteInstruction;
+import talk.runtime.InstructionExecutor;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;

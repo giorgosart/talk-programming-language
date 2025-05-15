@@ -17,13 +17,13 @@
 - [x] Use a registry or map for instruction keyword-to-class mapping in the parser, rather than hardcoding each instruction.
 
 ## Dependency Inversion & Interface Segregation
-- [ ] Inject dependencies (e.g., file system, logger) into instruction classes via interfaces, not direct instantiation, to improve testability and flexibility.
-- [ ] Define interfaces for file operations and logging, and depend on those abstractions in instruction classes.
+- [x] Inject dependencies (e.g., file system, logger) into instruction classes via interfaces, not direct instantiation, to improve testability and flexibility.
+- [x] Define interfaces for file operations and logging, and depend on those abstractions in instruction classes.
 
 ## Error Handling & Robustness
-- [ ] Standardize exception types for syntax, semantic, and runtime errors throughout the parser and executor.
-- [ ] Ensure all error messages include line numbers and context for easier debugging.
-- [ ] Add more granular error handling in `InstructionExecutor` for each instruction type.
+- [x] Standardize exception types for syntax, semantic, and runtime errors throughout the parser and executor.
+- [x] Ensure all error messages include line numbers and context for easier debugging.
+- [x] Add more granular error handling in `InstructionExecutor` for each instruction type.
 
 ## Test Structure & DRY Principle
 - [ ] Refactor unit tests to use parameterized tests for similar instruction types (e.g., file ops, variable assignment).

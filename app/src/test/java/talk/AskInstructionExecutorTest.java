@@ -1,6 +1,11 @@
 package talk;
 
 import org.junit.jupiter.api.Test;
+
+import talk.core.RuntimeContext;
+import talk.instruction.AskInstruction;
+import talk.runtime.InstructionExecutor;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AskInstructionExecutorTest {

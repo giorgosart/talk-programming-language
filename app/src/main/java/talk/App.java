@@ -4,6 +4,7 @@
 package talk;
 
 import picocli.CommandLine;
+import talk.core.TalkRunner;
 
 public class App {
     public String getGreeting() {

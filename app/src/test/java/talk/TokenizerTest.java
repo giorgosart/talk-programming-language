@@ -1,6 +1,9 @@
 package talk;
 
 import org.junit.jupiter.api.Test;
+
+import talk.core.Tokenizer;
+
 import java.util.Arrays;
 import java.util.List;
 
