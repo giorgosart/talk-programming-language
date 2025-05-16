@@ -1,0 +1,29 @@
+# Debug test for variable scoping
+
+# First, let's see where files are created
+write "Starting debugging..." to console
+
+# Create file with absolute path
+create file as "/tmp/scoping_debug.txt"
+write "Debug test running..." in "/tmp/scoping_debug.txt"
+
+# Setup basic scoping test
+set global_var to "global"
+write "Global scope: " in "/tmp/scoping_debug.txt"
+write global_var in "/tmp/scoping_debug.txt"
+
+if true then
+    set local_var to "local"
+    set global_var to "modified"
+    write "If scope: " in "/tmp/scoping_debug.txt"
+    write local_var in "/tmp/scoping_debug.txt"
+    write ", global_var = " in "/tmp/scoping_debug.txt"
+    write global_var in "/tmp/scoping_debug.txt"
+
+write "After if: global_var = " in "/tmp/scoping_debug.txt"
+write global_var in "/tmp/scoping_debug.txt"
+
+# Check if we can access local_var from outside the if block
+write "Checking local_var accessibility..." to console
+
+write "DEBUG COMPLETE" in "/tmp/scoping_debug.txt"

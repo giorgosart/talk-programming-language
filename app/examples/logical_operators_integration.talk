@@ -1,0 +1,53 @@
+# Logical operators integration test
+# This test demonstrates logical operations and writes results to a file
+
+# Initialize variables for testing
+set a to 5
+set b to 10
+set c to 5
+set d to false
+set e to true
+
+# Create a file to store our test results
+create file as "logical_results.txt"
+
+# Test basic logical operators and write results to file
+if a is equal to c then
+    write "Test 1: TRUE - a equals c (5 equals 5)" in logical_results.txt
+else
+    write "Test 1: FALSE - a does not equal c" in logical_results.txt
+
+# Test logical AND
+if a is equal to 5 and b is equal to 10 then
+    write "Test 2: TRUE - AND operator works (a=5 AND b=10)" in logical_results.txt
+else
+    write "Test 2: FALSE - AND operator failed" in logical_results.txt
+
+# Test logical OR
+if a is equal to 6 or b is equal to 10 then
+    write "Test 3: TRUE - OR operator works (a!=6 OR b=10)" in logical_results.txt
+else
+    write "Test 3: FALSE - OR operator failed" in logical_results.txt
+
+# Test logical NOT
+if not a is equal to b then
+    write "Test 4: TRUE - NOT operator works (NOT a=b)" in logical_results.txt
+else
+    write "Test 4: FALSE - NOT operator failed" in logical_results.txt
+
+# Test compound logical expressions
+if (a is equal to c and b is greater than a) or d is equal to true then
+    write "Test 5: TRUE - Complex expression 1 works" in logical_results.txt
+else
+    write "Test 5: FALSE - Complex expression 1 failed" in logical_results.txt
+
+# Test another compound expression
+if not (a is equal to b) and (e is equal to true or c is not equal to 5) then
+    write "Test 6: TRUE - Complex expression 2 works" in logical_results.txt
+else
+    write "Test 6: FALSE - Complex expression 2 failed" in logical_results.txt
+
+# Read and output all test results
+read file logical_results.txt into final_results
+write final_results in output.txt
+write "Logical operators integration test completed."

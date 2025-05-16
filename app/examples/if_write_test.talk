@@ -1,0 +1,4 @@
+# Simple if-write test
+set x to 5
+if x is equal to 5 then
+    write "x is 5"

@@ -45,6 +45,30 @@ public class RuntimeContext {
     }
 
     public void setVariable(String name, Object value) {
+        // First check if the variable exists in the current scope
+        variableStack.peek().put(name, value);
+    }
+    
+    /**
+     * Sets a variable in the current scope, preventing modification of variables in outer scopes
+     * by default. This implements proper variable shadowing.
+     * 
+     * @param name The variable name
+     * @param value The value to set
+     * @param allowOuterScopeModification Whether to allow modifying variables in outer scopes
+     */
+    public void setVariableScoped(String name, Object value, boolean allowOuterScopeModification) {
+        if (allowOuterScopeModification) {
+            // Look for the variable in existing scopes and update it
+            for (Map<String, Object> scope : variableStack) {
+                if (scope.containsKey(name)) {
+                    scope.put(name, value);
+                    return;
+                }
+            }
+        }
+        // If not found in any scope or if outer scope modification is not allowed,
+        // create/update the variable in the current scope
         variableStack.peek().put(name, value);
     }
 

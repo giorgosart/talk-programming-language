@@ -1,0 +1,4 @@
+# Minimal file test
+write "Testing file creation" to console
+create file as "simple_test.txt"
+write "This is a simple test" in simple_test.txt

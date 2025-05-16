@@ -1,0 +1,27 @@
+# Final test for variable shadowing
+
+# Create output file with a known location
+create file as absolute_path_test.txt
+write "FINAL SCOPING TEST" in absolute_path_test.txt
+
+# Global scope variable
+set global_var to "original value"
+write "1. Global scope: global_var = " in absolute_path_test.txt
+write global_var in absolute_path_test.txt
+
+# Test function scope
+define test_function
+    set global_var to "function value"
+    set function_var to "function-only var"
+    
+    write "2. In function: global_var = " in absolute_path_test.txt
+    write global_var in absolute_path_test.txt
+    
+# Call the function
+call test_function
+
+# Check if global_var was modified
+write "3. After function: global_var = " in absolute_path_test.txt
+write global_var in absolute_path_test.txt
+
+write "SHADOWING TEST COMPLETE" in absolute_path_test.txt

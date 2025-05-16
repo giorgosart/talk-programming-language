@@ -1,0 +1,40 @@
+# Test for variable scoping
+
+# Global variable
+set x to 10
+write "1. Global x: " in output.txt 
+write x in output.txt
+
+# Function with local variable
+define test_scope
+    # Local variable with same name as global
+    set x to 20
+    write "2. Inside function, local x: " in output.txt
+    write x in output.txt
+    
+    # Nested scope with local variable
+    if x is equal to 20 then
+        set x to 30
+        write "3. Inside if block, local x: " in output.txt
+        write x in output.txt
+    
+    write "4. After if block, function x: " in output.txt
+    write x in output.txt
+    
+    # Create a new variable in function scope
+    set y to 50
+    write "5. Function local y: " in output.txt
+    write y in output.txt
+
+# Call the function
+call test_scope
+
+# Check if global x is unchanged
+write "6. Global x after function call: " in output.txt
+write x in output.txt
+
+# Check if function local y is not accessible - we would expect this to fail
+# since y should be limited to function scope
+write "7. Global scope doesn't have access to function variables" in output.txt
+
+write "Variable scoping test completed" in output.txt

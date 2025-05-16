@@ -1,0 +1,10 @@
+# Super minimal test for write statements in indented blocks
+set a to 5
+set b to 10
+
+# Write at top level (no indentation)
+write "This is a top-level write"
+
+# Basic if block with indented write
+if a is not equal to b then
+    write "This is an indented write"

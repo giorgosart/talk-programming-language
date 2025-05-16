@@ -1,0 +1,41 @@
+# Comparison operators test
+set a to 5
+set b to 10
+set c to 5
+
+# Basic comparison operators
+if a is equal to 5 then
+    write "a is equal to 5"
+
+if a is not equal to b then
+    write "a is not equal to b"
+
+if b is greater than a then
+    write "b is greater than a"
+
+if a is smaller than b then
+    write "a is smaller than b"
+
+# Logical operators with comparisons
+if a is equal to 5 and b is equal to 10 then
+    write "a is 5 AND b is 10"
+
+if a is equal to c and b is greater than 10 or a is smaller than 3 then
+    write "Complex condition evaluated to true"
+
+if not a is equal to b then
+    write "a is NOT equal to b"
+
+# Nested if statements with logical operators
+if a is equal to 5 then
+    if b is greater than 8 then
+        write "Nested condition: a is 5 and b is greater than 8"
+    if b is smaller than 15 then
+        write "Nested condition: a is 5 and b is smaller than 15"
+
+# Multiple logical operators
+if a is equal to 5 and b is greater than 8 and c is equal to 5 then
+    write "All three conditions are true"
+
+if a is equal to 6 or a is equal to 5 and b is equal to 10 then
+    write "Complex precedence test"

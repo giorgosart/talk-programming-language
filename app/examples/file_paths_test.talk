@@ -1,0 +1,47 @@
+# Test file paths for variable scoping
+
+# Check the current working directory
+write "Testing absolute file paths" to console
+
+# Create file with absolute path
+create file as "/tmp/scope_test_output.txt"
+write "VARIABLE SHADOWING TEST WITH ABSOLUTE PATH" in "/tmp/scope_test_output.txt"
+
+# Set up our test variables
+set outer_var to "global value"
+write "1. Global scope: outer_var = " in "/tmp/scope_test_output.txt"
+write outer_var in "/tmp/scope_test_output.txt"
+
+# Test if-statement scoping with absolute file path
+if true then
+    set outer_var to "if block value"
+    write "2. If block: outer_var = " in "/tmp/scope_test_output.txt"
+    write outer_var in "/tmp/scope_test_output.txt"
+
+# The global variable should be unchanged
+write "3. After if block: outer_var = " in "/tmp/scope_test_output.txt"
+write outer_var in "/tmp/scope_test_output.txt"
+
+# Test function scoping
+define test_scope
+    set outer_var to "function value"
+    write "4. In function: outer_var = " in "/tmp/scope_test_output.txt" 
+    write outer_var in "/tmp/scope_test_output.txt"
+
+call test_scope
+
+# The global variable should still be unchanged
+write "5. After function call: outer_var = " in "/tmp/scope_test_output.txt"
+write outer_var in "/tmp/scope_test_output.txt"
+
+# Test loop scoping
+repeat 2 times
+    set outer_var to "loop value"
+    write "6. In loop: outer_var = " in "/tmp/scope_test_output.txt"
+    write outer_var in "/tmp/scope_test_output.txt"
+
+# The global variable should still be unchanged
+write "7. After loop: outer_var = " in "/tmp/scope_test_output.txt"
+write outer_var in "/tmp/scope_test_output.txt"
+
+write "SCOPING TEST COMPLETE" in "/tmp/scope_test_output.txt"

@@ -240,7 +240,12 @@ public class Parser {
         Tokenizer.Token token = tokens.get(pos);
         String value = token.value;
         int line = token.lineNumber;
-        // Using getIndentLevel to get the current indentation level
+        
+        // Handle the special case of "write" within indentation directly
+        if ("write".equals(value)) {
+            return parseIndentedWrite(line);
+        }
+        
         if ("INDENT".equals(value)) {
             pos++;
             List<Instruction> block = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
@@ -318,6 +323,14 @@ public class Parser {
                     // Do NOT advance pos here; just return so the parent (e.g. parseIfInstruction) can handle 'otherwise'
                     return block;
                 }
+                
+                // Special handling for write statements in indented blocks
+                if (peek("write")) {
+                    Instruction writeInstr = parseIndentedWrite(tokens.get(pos).lineNumber);
+                    block.add(writeInstr);
+                    continue;
+                }
+                
                 Instruction instr = parseInstructionWithIndent(parentIndent);
                 if (instr != null) block.add(instr);
             }
@@ -329,6 +342,14 @@ public class Parser {
                     // Do NOT advance pos here; just return so the parent (e.g. parseIfInstruction) can handle 'otherwise'
                     return block;
                 }
+                
+                // Special handling for write statements in indented blocks
+                if (peek("write")) {
+                    Instruction writeInstr = parseIndentedWrite(tokens.get(pos).lineNumber);
+                    block.add(writeInstr);
+                    continue;
+                }
+                
                 Instruction instr = parseInstructionWithIndent(parentIndent);
                 if (instr != null) block.add(instr);
             }
@@ -336,6 +357,42 @@ public class Parser {
         // Always consume all trailing DEDENT tokens
         while (peek("DEDENT")) pos++;
         return block;
+    }
+    
+    private Instruction parseIndentedWrite(int line) {
+        System.out.println("[PARSER DEBUG] Handling indented write at line " + line);
+        
+        pos++; // Skip "write"
+        
+        // Get the content to write
+        if (pos >= tokens.size()) {
+            throw new TalkSyntaxException("Expected value after 'write'", line);
+        }
+        
+        String content = tokens.get(pos).value;
+        pos++; // Skip the content
+        
+        System.out.println("[PARSER DEBUG] Write content: " + content);
+        
+        // Check for "in" to specify file destination
+        String destination = "console"; // Default to console
+        
+        if (pos < tokens.size() && tokens.get(pos).value.equals("in")) {
+            pos++; // Skip "in"
+            
+            if (pos >= tokens.size()) {
+                throw new TalkSyntaxException("Expected filename after 'in'", line);
+            }
+            
+            destination = tokens.get(pos).value;
+            pos++; // Skip the destination
+            
+            System.out.println("[PARSER DEBUG] Write destination: " + destination);
+        } else {
+            System.out.println("[PARSER DEBUG] Write to console (implicit)");
+        }
+        
+        return new WriteInstruction(content, destination, line);
     }
 
     // Helper: returns true if the current token is a block boundary keyword at the given indentation level
@@ -659,11 +716,8 @@ public class Parser {
                     }
                     break;
                 case "write":
-                    pos++;
-                    val = expectValue();
-                    expect("in");
-                    identifier = expectIdentifier();
-                    break;
+                    // Use our common helper method for write statements
+                    return parseIndentedWrite(line);
                 case "ask":
                     pos++;
                     val = expectValue();

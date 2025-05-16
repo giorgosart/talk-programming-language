@@ -1,0 +1,59 @@
+# Logical operators with arithmetic operations integration test
+# This test demonstrates using logical operators with numerical comparisons
+
+# Initialize variables for testing
+set x to 10
+set y to 5
+set z to 15
+set threshold to 20
+
+# Create a file to store our test results
+create file as "logical_arithmetic.txt"
+write "Starting logical arithmetic integration test" in logical_arithmetic.txt
+
+# Test 1: Basic numeric comparison with logical AND
+if x is greater than y and z is greater than x then
+    append "Test 1: TRUE - x > y AND z > x" to logical_arithmetic.txt
+else
+    append "Test 1: FALSE - condition not met" to logical_arithmetic.txt
+
+# Test 2: Arithmetic operations within logical expressions
+if x plus y is equal to 15 and z minus x is equal to 5 then
+    append "Test 2: TRUE - x + y = 15 AND z - x = 5" to logical_arithmetic.txt
+else
+    append "Test 2: FALSE - arithmetic condition not met" to logical_arithmetic.txt
+
+# Test 3: Complex arithmetic with logical OR
+if x times y is greater than threshold or z divided by y is equal to 3 then
+    append "Test 3: TRUE - x * y > threshold OR z / y = 3" to logical_arithmetic.txt
+else
+    append "Test 3: FALSE - complex arithmetic condition not met" to logical_arithmetic.txt
+
+# Test 4: Using NOT with arithmetic comparison
+if not x minus y is greater than 10 then
+    append "Test 4: TRUE - NOT (x - y > 10)" to logical_arithmetic.txt
+else
+    append "Test 4: FALSE - condition not met" to logical_arithmetic.txt
+
+# Test 5: Complex nested logical operations with arithmetic
+set a to x plus y
+set b to z minus x
+if (a is greater than b and x is not equal to z) or (x times 2 is equal to z and y modulo 2 is equal to 1) then
+    append "Test 5: TRUE - Complex nested condition is met" to logical_arithmetic.txt
+else
+    append "Test 5: FALSE - Complex nested condition not met" to logical_arithmetic.txt
+
+# Test 6: Conditional arithmetic operation
+if x is greater than y then
+    set result to x times 2
+    if result is greater than threshold then
+        append "Test 6: TRUE - Conditional result > threshold" to logical_arithmetic.txt
+    else
+        append "Test 6: FALSE - Conditional result <= threshold" to logical_arithmetic.txt
+else
+    append "Test 6: First condition not met" to logical_arithmetic.txt
+
+# Read and output all test results
+read file logical_arithmetic.txt into final_results
+write final_results in output.txt
+write "Logical arithmetic integration test completed."

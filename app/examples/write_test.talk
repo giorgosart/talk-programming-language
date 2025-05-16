@@ -1,0 +1,4 @@
+# Simple write test
+write "Hello, World!"
+write "This is a test of console output"
+write "Multiple lines should appear"

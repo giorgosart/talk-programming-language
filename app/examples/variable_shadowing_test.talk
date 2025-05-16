@@ -1,0 +1,131 @@
+# filepath: /Users/George.Artemiou/talk-programming-language/app/examples/variable_shadowing_test.talk
+# Test for variable shadowing and nested scopes
+
+# Set up output file
+create file as "shadow_test.txt"
+write "VARIABLE SHADOWING AND NESTED SCOPE TESTS" in shadow_test.txt
+
+# -----------------------------
+# Test 1: Basic variable shadowing in functions
+# -----------------------------
+set outer_var to "global value"
+write "1. Global: outer_var = " in shadow_test.txt
+write outer_var in shadow_test.txt
+
+define shadow_test
+    # Shadow the outer variable
+    set outer_var to "function value"
+    write "2. Inside function: outer_var = " in shadow_test.txt
+    write outer_var in shadow_test.txt
+
+call shadow_test
+
+# Check the global value is unchanged
+write "3. After function call: outer_var = " in shadow_test.txt
+write outer_var in shadow_test.txt
+
+# -----------------------------
+# Test 2: Nested function scopes
+# -----------------------------
+define outer_func
+    set nested_var to "outer function"
+    
+    write "4. In outer function: nested_var = " in shadow_test.txt
+    write nested_var in shadow_test.txt
+    
+    define inner_func
+        set nested_var to "inner function"
+        write "5. In inner function: nested_var = " in shadow_test.txt
+        write nested_var in shadow_test.txt
+        
+    call inner_func
+    
+    write "6. After inner function: nested_var = " in shadow_test.txt
+    write nested_var in shadow_test.txt
+
+call outer_func
+
+# -----------------------------
+# Test 3: Shadowing in loops
+# -----------------------------
+set loop_var to "outside loop"
+write "7. Before loop: loop_var = " in shadow_test.txt
+write loop_var in shadow_test.txt
+
+repeat 3 times
+    set loop_var to "inside loop"
+    set local_index to _index
+    write "8. Inside loop iteration " in shadow_test.txt
+    write local_index in shadow_test.txt
+    write ": loop_var = " in shadow_test.txt
+    write loop_var in shadow_test.txt
+
+write "9. After loop: loop_var = " in shadow_test.txt
+write loop_var in shadow_test.txt
+
+# -----------------------------
+# Test 4: Nested if-statements with shadowing
+# -----------------------------
+set depth1 to "top level"
+
+if true then
+    set depth1 to "level 1"
+    set depth2 to "level 1 var"
+    
+    write "10. If level 1: depth1 = " in shadow_test.txt
+    write depth1 in shadow_test.txt
+    
+    if true then
+        set depth1 to "level 2"
+        set depth2 to "level 2 var"
+        
+        write "11. If level 2: depth1 = " in shadow_test.txt
+        write depth1 in shadow_test.txt
+        write ", depth2 = " in shadow_test.txt
+        write depth2 in shadow_test.txt
+        
+        if true then
+            set depth1 to "level 3"
+            
+            write "12. If level 3: depth1 = " in shadow_test.txt 
+            write depth1 in shadow_test.txt
+            write ", depth2 = " in shadow_test.txt
+            write depth2 in shadow_test.txt
+
+write "13. After nested if: depth1 = " in shadow_test.txt
+write depth1 in shadow_test.txt
+
+# -----------------------------
+# Test 5: Complex nesting (if inside loop inside function)
+# -----------------------------
+define complex_nested
+    set complex_var to "function level"
+    
+    write "14. Function level: complex_var = " in shadow_test.txt
+    write complex_var in shadow_test.txt
+    
+    repeat 2 times
+        set complex_var to "loop level"
+        set loop_index to _index
+        
+        write "15. Loop level (iteration " in shadow_test.txt
+        write loop_index in shadow_test.txt
+        write "): complex_var = " in shadow_test.txt
+        write complex_var in shadow_test.txt
+        
+        if true then
+            set complex_var to "if level"
+            
+            write "16. If level (iteration " in shadow_test.txt
+            write loop_index in shadow_test.txt
+            write "): complex_var = " in shadow_test.txt
+            write complex_var in shadow_test.txt
+    
+    write "17. After nested structures: complex_var = " in shadow_test.txt
+    write complex_var in shadow_test.txt
+
+call complex_nested
+
+write "18. After function with nesting: complex_var doesn't exist in global scope" in shadow_test.txt
+
+write "SHADOWING TEST COMPLETE" in shadow_test.txt

@@ -1,0 +1,49 @@
+# Test for variable shadowing with macOS absolute paths
+
+# Create output file in the workspace root
+create file as "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+write "VARIABLE SHADOWING TEST (macOS)" in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Global scope variable
+set global_var to "original value"
+write "1. Global scope: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Test function scope
+define test_function
+    set global_var to "function value"
+    set function_var to "function-only var"
+    
+    write "2. In function: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+    write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+    
+# Call the function
+call test_function
+
+# Check if global_var was modified
+write "3. After function: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Test if-statement scope
+if true then
+    set global_var to "if-block value"
+    
+    write "4. In if-block: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+    write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Check if global_var was modified
+write "5. After if-block: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Test loop scope
+repeat 1 times
+    set global_var to "loop value" 
+    
+    write "6. In loop: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+    write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+# Check if global_var was modified
+write "7. After loop: global_var = " in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt" 
+write global_var in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"
+
+write "SHADOWING TEST COMPLETE" in "/Users/George.Artemiou/talk-programming-language/shadow_mac_test.txt"

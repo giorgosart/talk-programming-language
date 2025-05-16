@@ -1,0 +1,72 @@
+# Logical operators with loops integration test
+# This test demonstrates using logical operators within loops
+
+# Initialize variables for testing
+set count to 1
+set max_count to 5
+set found to false
+
+# Create a file to store our test results
+create file as "logical_loops.txt"
+write "Starting logical loops integration test" in logical_loops.txt
+
+# Test 1: Loop with a logical condition
+append "Test 1: Loop until logical condition" to logical_loops.txt
+while count is smaller than max_count and not found do
+    append "  Iteration: " to logical_loops.txt
+    append count to logical_loops.txt
+    
+    # Use logical operator within the loop body
+    if count is equal to 3 then
+        set found to true
+        append "  Found the value!" to logical_loops.txt
+    else
+        append "  Still searching..." to logical_loops.txt
+    
+    increment count
+append "Loop completed. Final count: " to logical_loops.txt
+append count to logical_loops.txt
+
+# Test 2: Loop with OR condition
+set i to 1
+set continue to true
+append "Test 2: Loop with OR exit condition" to logical_loops.txt
+while i is smaller than 10 and continue do
+    append "  Loop iteration: " to logical_loops.txt
+    append i to logical_loops.txt
+    
+    # Exit loop if either condition is met
+    if i is equal to 5 or i times i is greater than 20 then
+        append "  Exit condition met" to logical_loops.txt
+        set continue to false
+    else
+        append "  Continue looping" to logical_loops.txt
+    
+    increment i
+append "Loop exited. Final i: " to logical_loops.txt
+append i to logical_loops.txt
+
+# Test 3: Nested loops with logical conditions
+append "Test 3: Nested loops with logical conditions" to logical_loops.txt
+set outer to 1
+while outer is smaller than 4 do
+    append "  Outer loop: " to logical_loops.txt
+    append outer to logical_loops.txt
+    
+    set inner to 1
+    while inner is smaller than 3 do
+        append "    Inner loop: " to logical_loops.txt
+        append inner to logical_loops.txt
+        
+        # Logical condition checking both loop variables
+        if outer is equal to 2 and inner is equal to 2 then
+            append "    Special condition met!" to logical_loops.txt
+        
+        increment inner
+    
+    increment outer
+
+# Read and output all test results
+read file logical_loops.txt into final_results
+write final_results in output.txt
+write "Logical loops integration test completed."

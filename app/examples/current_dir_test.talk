@@ -1,0 +1,6 @@
+# Test to print the current working directory
+write "Current directory test" to console
+
+# Create a file with debug info
+create file as "cwd_info.txt"
+write "This file contains working directory info" in cwd_info.txt

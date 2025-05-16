@@ -547,6 +547,203 @@ public class Tokenizer {
         }
     }
 
+    // Handler for logical operators (and, or, not)
+    private void handleLogicalOperators(String trimmed, int lineNumber, List<Token> tokens) {
+        // First, standard tokenize the statement
+        String[] parts = trimmed.split("\\s+");
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            
+            // Convert the case-insensitive logical operators to standard form
+            if (part.equalsIgnoreCase("and")) {
+                tokens.add(new Token("and", lineNumber));
+            } else if (part.equalsIgnoreCase("or")) {
+                tokens.add(new Token("or", lineNumber));
+            } else if (part.equalsIgnoreCase("not")) {
+                tokens.add(new Token("not", lineNumber));
+            } else {
+                // For non-logical operators, add the token as is
+                tokens.add(new Token(part, lineNumber));
+            }
+        }
+    }
+    
+    // Handler for comparison operators (is equal to, is not equal to, is greater than, is smaller than)
+    // and logical operators (and, or, not)
+    private void handleComparisonOperators(String trimmed, int lineNumber, List<Token> tokens) {
+        if (trimmed.startsWith("if ")) {
+            // Extract the 'if' token
+            tokens.add(new Token("if", lineNumber));
+            
+            // Process the rest of the condition
+            String condition = trimmed.substring(3).trim();
+            int thenIdx = condition.indexOf(" then");
+            String conditionWithoutThen = thenIdx > 0 ? condition.substring(0, thenIdx) : condition;
+            
+            System.out.println("[TOKENIZER DEBUG] Processing condition: " + conditionWithoutThen);
+            
+            // Split by potential logical operators to handle complex expressions
+            List<String> expressions = splitByLogicalOperators(conditionWithoutThen);
+            
+            System.out.println("[TOKENIZER DEBUG] Split into " + expressions.size() + " parts: " + expressions);
+            
+            for (int i = 0; i < expressions.size(); i++) {
+                String expr = expressions.get(i).trim();
+                
+                System.out.println("[TOKENIZER DEBUG] Processing part " + i + ": " + expr);
+                
+                // Check for logical operators first
+                if (expr.equalsIgnoreCase("and")) {
+                    tokens.add(new Token("and", lineNumber));
+                } else if (expr.equalsIgnoreCase("or")) {
+                    tokens.add(new Token("or", lineNumber));
+                } else if (expr.equalsIgnoreCase("not")) {
+                    tokens.add(new Token("not", lineNumber));
+                }
+                // Check for each comparison type and tokenize accordingly
+                else if (expr.contains(" is equal to ")) {
+                    tokenizeComparison(expr, " is equal to ", "is equal to", lineNumber, tokens);
+                } else if (expr.contains(" is not equal to ")) {
+                    tokenizeComparison(expr, " is not equal to ", "is not equal to", lineNumber, tokens);
+                } else if (expr.contains(" is greater than ")) {
+                    tokenizeComparison(expr, " is greater than ", "is greater than", lineNumber, tokens);
+                } else if (expr.contains(" is smaller than ")) {
+                    tokenizeComparison(expr, " is smaller than ", "is smaller than", lineNumber, tokens);
+                } else {
+                    // Add the expression as is if no comparison or logical operator found
+                    tokens.add(new Token(expr, lineNumber));
+                }
+            }
+            
+            // Add 'then' token if present
+            if (thenIdx > 0) {
+                tokens.add(new Token("then", lineNumber));
+            }
+        }
+    }
+    
+    // Helper method to tokenize a comparison expression
+    private void tokenizeComparison(String expr, String separator, String operatorToken, int lineNumber, List<Token> tokens) {
+        int idx = expr.indexOf(separator);
+        String left = expr.substring(0, idx).trim();
+        String right = expr.substring(idx + separator.length()).trim();
+        
+        // Add left expression
+        tokens.add(new Token(left, lineNumber));
+        
+        // Add operator as separate tokens
+        String[] operatorParts = operatorToken.split(" ");
+        for (String part : operatorParts) {
+            tokens.add(new Token(part, lineNumber));
+        }
+        
+        // Add right expression
+        tokens.add(new Token(right, lineNumber));
+    }
+    
+    // Helper method to split a condition by logical operators (and, or, not) but preserve the operators
+    private List<String> splitByLogicalOperators(String condition) {
+        List<String> result = new ArrayList<>();
+        StringBuilder currentExpression = new StringBuilder();
+        
+        // Flags to handle quoted strings and parentheses properly
+        boolean inQuotes = false;
+        int parenthesesDepth = 0;
+        
+        int currentPos = 0;
+        while (currentPos < condition.length()) {
+            char currentChar = condition.charAt(currentPos);
+            
+            // Handle quoted strings
+            if (currentChar == '"') {
+                inQuotes = !inQuotes;
+                currentExpression.append(currentChar);
+                currentPos++;
+                continue;
+            }
+            
+            // Handle parentheses
+            if (currentChar == '(') {
+                parenthesesDepth++;
+                currentExpression.append(currentChar);
+                currentPos++;
+                continue;
+            }
+            if (currentChar == ')') {
+                parenthesesDepth--;
+                currentExpression.append(currentChar);
+                currentPos++;
+                continue;
+            }
+            
+            // Skip if we're in quotes or inside parentheses
+            if (inQuotes || parenthesesDepth > 0) {
+                currentExpression.append(currentChar);
+                currentPos++;
+                continue;
+            }
+            
+            // Check for logical operators
+            
+            // Check for " and " (case insensitive)
+            if (currentPos + 5 <= condition.length() && 
+                condition.substring(currentPos, currentPos + 5).toLowerCase().equals(" and ")) {
+                
+                // Add the current expression
+                result.add(currentExpression.toString().trim());
+                
+                // Add the operator
+                result.add("and");
+                
+                // Reset for next expression
+                currentExpression = new StringBuilder();
+                currentPos += 5;
+                continue;
+            }
+            
+            // Check for " or " (case insensitive)
+            if (currentPos + 4 <= condition.length() && 
+                condition.substring(currentPos, currentPos + 4).toLowerCase().equals(" or ")) {
+                
+                // Add the current expression
+                result.add(currentExpression.toString().trim());
+                
+                // Add the operator
+                result.add("or");
+                
+                // Reset for next expression
+                currentExpression = new StringBuilder();
+                currentPos += 4;
+                continue;
+            }
+            
+            // Check for "not " at the beginning of a condition or expression
+            if ((currentPos == 0 || currentExpression.length() == 0) && 
+                currentPos + 4 <= condition.length() && 
+                condition.substring(currentPos, currentPos + 4).toLowerCase().equals("not ")) {
+                
+                // Add the NOT operator
+                result.add("not");
+                
+                // Move past "not "
+                currentPos += 4;
+                continue;
+            }
+            
+            // Regular character, add to current expression
+            currentExpression.append(currentChar);
+            currentPos++;
+        }
+        
+        // Add the last expression if not empty
+        String lastExpr = currentExpression.toString().trim();
+        if (!lastExpr.isEmpty()) {
+            result.add(lastExpr);
+        }
+        
+        return result;
+    }
+
     public List<Token> tokenize(List<String> lines) {
         List<Token> tokens = new ArrayList<>();
         IndentationManager indentationManager = new IndentationManager();
@@ -799,6 +996,19 @@ public class Tokenizer {
                 continue;
             } else if (trimmed.startsWith("if ") && (trimmed.contains(" is before ") || trimmed.contains(" is after "))) {
                 handleDateComparison(trimmed, i + 1, tokens);
+                continue;
+            } else if (trimmed.startsWith("if ") && (trimmed.contains(" is equal to ") || trimmed.contains(" is not equal to ") || trimmed.contains(" is greater than ") || trimmed.contains(" is smaller than ") ||
+                trimmed.toUpperCase().contains(" AND ") || 
+                trimmed.toUpperCase().contains(" OR ") || 
+                trimmed.toUpperCase().startsWith("NOT "))) {
+                
+                // Handle the comparison and logical operators
+                handleComparisonOperators(trimmed, i + 1, tokens);
+                
+                prevIndent = indent;
+                continue;
+            } else if (trimmed.contains(" and ") || trimmed.contains(" or ") || trimmed.contains(" not ")) {
+                handleLogicalOperators(trimmed, i + 1, tokens);
                 continue;
             } else {
                 handleArithmeticExpression(trimmed, i + 1, tokens);

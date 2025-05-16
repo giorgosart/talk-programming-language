@@ -1,0 +1,17 @@
+# Part 1 of logical operators test
+set a to 5
+set b to 10
+set c to 5
+
+# Basic comparison operators
+if a is equal to 5 then
+    write "a is equal to 5"
+
+if a is not equal to b then
+    write "a is not equal to b"
+
+if b is greater than a then
+    write "b is greater than a"
+
+if a is smaller than b then
+    write "a is smaller than b"

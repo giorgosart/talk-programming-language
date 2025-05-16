@@ -83,49 +83,75 @@ public class InstructionExecutor {
             if (context.hasVariable(vi.getName())) {
                 throw new TalkSemanticException("Variable '" + vi.getName() + "' already declared", vi.getLineNumber());
             }
+            // Variable declarations should always go in the current scope
             context.setVariable(vi.getName(), vi.getValue());
         } else if (instruction instanceof AssignmentInstruction) {
             AssignmentInstruction ai = (AssignmentInstruction) instruction;
-            // Only auto-declare in function/local scope (not global)
-            boolean isLocalScope = context.isLocalScope();
+            
+            // Resolving behavior for 'set' instruction:
+            // 1. If the variable exists in any scope, update it in its own scope (using setVariableScoped)
+            // 2. If the variable doesn't exist, create it in the current scope
+            
             if (!context.hasVariable(ai.getVariableName())) {
-                if (isLocalScope) {
-                    context.setVariable(ai.getVariableName(), ai.getValue());
-                } else {
-                    throw new TalkSemanticException("Variable '" + ai.getVariableName() + "' not declared", ai.getLineNumber());
-                }
-            } else {
+                // Create new variable in the current scope
                 context.setVariable(ai.getVariableName(), ai.getValue());
+            } else {
+                // Update existing variable
+                // Set to true to allow modifying parent scope variables from child scopes
+                boolean allowOuterScopeModification = true; 
+                context.setVariableScoped(ai.getVariableName(), ai.getValue(), allowOuterScopeModification);
             }
         } else if (instruction instanceof IfInstruction) {
             IfInstruction ii = (IfInstruction) instruction;
             Object condResult = resolver.resolve(ii.getCondition());
             boolean cond = condResult instanceof Boolean ? (Boolean) condResult : false;
             List<Instruction> branch = cond ? ii.getThenInstructions() : ii.getElseInstructions();
-            for (Instruction instr : branch) {
-                execute(instr);
+            
+            // Create a new scope for the if/else block
+            context.pushScope();
+            
+            try {
+                for (Instruction instr : branch) {
+                    execute(instr);
+                }
+            } finally {
+                // Always pop the scope after executing the block
+                context.popScope();
             }
         } else if (instruction instanceof WriteInstruction) {
             WriteInstruction wi = (WriteInstruction) instruction;
             Object content = resolver.resolve(wi.getContent());
             String fileName = wi.getFileName();
-            try {
-                if (fileSystem.fileExists(fileName)) {
-                    fileSystem.appendToFile(fileName, String.valueOf(content) + System.lineSeparator());
-                } else {
-                    fileSystem.writeFile(fileName, String.valueOf(content) + System.lineSeparator());
-                }
-            } catch (IOException e) {
+            
+            // Special case for console output
+            if ("console".equals(fileName)) {
+                // Try writing directly to console using System.err
+                System.err.println("CONSOLE OUTPUT: " + String.valueOf(content));
+            } else {
+                // Write to file
                 try {
-                    logger.error("Failed to write to file '" + fileName + "'", wi.getLineNumber());
-                } catch (IOException logEx) {
-                    // Ignore logging errors
+                    if (fileSystem.fileExists(fileName)) {
+                        fileSystem.appendToFile(fileName, String.valueOf(content) + System.lineSeparator());
+                    } else {
+                        fileSystem.writeFile(fileName, String.valueOf(content) + System.lineSeparator());
+                    }
+                } catch (IOException e) {
+                    try {
+                        logger.error("Failed to write to file '" + fileName + "'", wi.getLineNumber());
+                    } catch (IOException logEx) {
+                        // Ignore logging errors
+                    }
+                    throw new TalkRuntimeException("Failed to write to file '" + fileName + "'", wi.getLineNumber(), e);
                 }
-                throw new TalkRuntimeException("Failed to write to file '" + fileName + "'", wi.getLineNumber(), e);
             }
         } else if (instruction instanceof CreateFileInstruction) {
             CreateFileInstruction cfi = (CreateFileInstruction) instruction;
             String fileName = cfi.getFileName();
+            
+            // Debug: Print current working directory
+            System.out.println("[DEBUG] Creating file: " + fileName);
+            System.out.println("[DEBUG] Current working directory: " + System.getProperty("user.dir"));
+            
             try {
                 if (!fileSystem.fileExists(fileName)) {
                     fileSystem.writeFile(fileName, "");
@@ -202,9 +228,14 @@ public class InstructionExecutor {
                 }
                 ListValue list = (ListValue) listObj;
                 for (int i = 0; i < list.size(); i++) {
+                    // Create a new scope for each iteration to isolate variables
+                    context.pushScope();
+                    
+                    // Set loop-specific variables in the new scope
                     context.setVariable(ri.getItemVar(), list.get(i + 1)); // 1-based
                     context.setVariable("_index", i);
                     context.setVariable("position", i + 1); // 1-based position
+                    
                     for (Instruction instr : ri.getBody()) {
                         // Disallow reassignment of 'position' inside loop
                         if (instr instanceof AssignmentInstruction) {
@@ -215,19 +246,11 @@ public class InstructionExecutor {
                         }
                         execute(instr);
                     }
+                    
+                    // Pop the scope at the end of each iteration
+                    context.popScope();
                 }
-                // Remove loop variable, _index, and position after loop
-                try {
-                    java.lang.reflect.Method m = context.getClass().getDeclaredMethod("removeVariable", String.class);
-                    m.setAccessible(true);
-                    m.invoke(context, ri.getItemVar());
-                    m.invoke(context, "_index");
-                    m.invoke(context, "position");
-                } catch (Exception e) {
-                    context.setVariable(ri.getItemVar(), null);
-                    context.setVariable("_index", null);
-                    context.setVariable("position", null);
-                }
+                // No need to remove loop variables as they're isolated in their own scopes
             } else {
                 int count = 0;
                 try {
@@ -241,12 +264,22 @@ public class InstructionExecutor {
                     throw new TalkValueException("Invalid repeat count", ri.getLineNumber());
                 }
                 if (count < 0) throw new TalkValueException("Repeat count must be non-negative", ri.getLineNumber());
+                
                 Object prevIndex = context.getVariable("_index");
                 for (int i = 0; i < count; i++) {
+                    // Create a new scope for each iteration
+                    context.pushScope();
+                    
+                    // Set the index in the loop's scope
                     context.setVariable("_index", i);
+                    
+                    // Execute loop body
                     for (Instruction instr : ri.getBody()) {
                         execute(instr);
                     }
+                    
+                    // Pop the scope at the end of each iteration
+                    context.popScope();
                 }
                 if (prevIndex != null) {
                     context.setVariable("_index", prevIndex);

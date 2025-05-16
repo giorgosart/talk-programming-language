@@ -1,0 +1,19 @@
+# Minimal test for logical operators and indented write statements
+set a to 5
+set b to 10
+
+# Basic test
+if a is equal to 5 then
+    write "a equals 5"
+
+# Testing logical AND
+if a is equal to 5 and b is equal to 10 then
+    write "Logical AND works"
+    
+# Testing logical OR
+if a is equal to 6 or b is equal to 10 then
+    write "Logical OR works"
+    
+# Testing logical NOT
+if not a is equal to b then
+    write "Logical NOT works"

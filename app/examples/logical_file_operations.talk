@@ -1,0 +1,60 @@
+# Logical operators with file operations integration test
+# This test demonstrates using logical operators to make decisions about file operations
+
+# Create test files
+create file as "test_file1.txt"
+create file as "test_file2.txt"
+write "File 1 content" in test_file1.txt
+
+# Initialize result file to track our test outcomes
+create file as "logical_file_test.txt"
+write "Starting logical file operations test" in logical_file_test.txt
+
+# Test 1: Check if both files exist using AND operator
+if file exists "test_file1.txt" and file exists "test_file2.txt" then
+    write "Test 1: Both files exist (TRUE)" in logical_file_test.txt
+else
+    write "Test 1: Not both files exist (FALSE)" in logical_file_test.txt
+
+# Test 2: Check if either file exists using OR operator
+if file exists "test_file1.txt" or file exists "non_existent_file.txt" then
+    write "Test 2: At least one file exists (TRUE)" in logical_file_test.txt
+else
+    write "Test 2: Neither file exists (FALSE)" in logical_file_test.txt
+
+# Test 3: Check if a file doesn't exist using NOT operator
+if not file exists "non_existent_file.txt" then
+    write "Test 3: File doesn't exist (TRUE)" in logical_file_test.txt
+else
+    write "Test 3: File does exist (FALSE)" in logical_file_test.txt
+
+# Test 4: Complex condition with AND, OR, and file content check
+read file test_file1.txt into file1_content
+if (file1_content contains "File 1" and file exists "test_file2.txt") or not file exists "test_file3.txt" then
+    write "Test 4: Complex condition is true (TRUE)" in logical_file_test.txt
+else
+    write "Test 4: Complex condition is false (FALSE)" in logical_file_test.txt
+
+# Test 5: File operation based on logical condition
+if file exists "test_file1.txt" and not file exists "test_file3.txt" then
+    write "Test 5: Will perform file operation based on logical condition" in logical_file_test.txt
+    create file as "conditional_file.txt"
+    write "This file was created conditionally" in conditional_file.txt
+    
+    if file exists "conditional_file.txt" then
+        write "Test 5: File operation successful" in logical_file_test.txt
+    else
+        write "Test 5: File operation failed" in logical_file_test.txt
+else
+    write "Test 5: Condition not met, file operation skipped" in logical_file_test.txt
+
+# Clean up test files
+delete file test_file1.txt
+delete file test_file2.txt
+if file exists "conditional_file.txt" then
+    delete file conditional_file.txt
+
+# Read and output final results
+read file logical_file_test.txt into final_results
+write final_results in output.txt
+write "Logical file operations integration test completed."

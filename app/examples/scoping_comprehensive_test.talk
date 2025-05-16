@@ -1,0 +1,75 @@
+# Comprehensive test for variable scoping
+
+# Set up output file
+create file as "scoping_test.txt"
+write "COMPREHENSIVE SCOPING TEST" in scoping_test.txt
+
+# Global scope variables
+set global_var to "global value"
+write "1. Global variable: " in scoping_test.txt
+write global_var in scoping_test.txt
+
+# Test if-statement scoping
+if true then
+    set if_local_var to "if local value"
+    write "2. Inside if block, local variable: " in scoping_test.txt
+    write if_local_var in scoping_test.txt
+    
+    # Try to modify global variable inside if block
+    set global_var to "modified in if"
+    write "3. Inside if block, modified global: " in scoping_test.txt
+    write global_var in scoping_test.txt
+else
+    write "This should not execute" in scoping_test.txt
+    
+write "4. After if block, global variable should be unchanged: " in scoping_test.txt
+write global_var in scoping_test.txt
+
+# Test loop scoping 
+set loop_var to "original loop var"
+write "5. Before loop, loop_var: " in scoping_test.txt
+write loop_var in scoping_test.txt
+
+# Repeat loop with local variables
+repeat 3 times
+    set loop_var to "modified in loop"
+    set loop_index to _index
+    write "6. Inside loop iteration, loop_var: " in scoping_test.txt
+    write loop_var in scoping_test.txt
+    write ", index: " in scoping_test.txt
+    write loop_index in scoping_test.txt
+    
+write "7. After loop, loop_var should be unchanged: " in scoping_test.txt
+write loop_var in scoping_test.txt
+
+# Test list iteration loop scoping
+variable fruits equals ["apple", "banana", "cherry"]
+write "8. List iteration loop:" in scoping_test.txt
+
+repeat for each fruit in fruits
+    write "   Fruit: " in scoping_test.txt
+    write fruit in scoping_test.txt
+    write ", Position: " in scoping_test.txt
+    write position in scoping_test.txt
+    set custom_var to "fruit specific"
+    
+write "9. After list loop, fruits still exist: " in scoping_test.txt
+write fruits in scoping_test.txt
+
+# Test function scope
+define test_function
+    set func_var to "function local"
+    write "10. Inside function, func_var: " in scoping_test.txt
+    write func_var in scoping_test.txt
+    
+    # Try to modify global variables
+    set global_var to "modified in function"
+    write "11. Inside function, modified global_var: " in scoping_test.txt
+    write global_var in scoping_test.txt
+    
+call test_function
+
+write "12. After function call, global_var should be unchanged: " in scoping_test.txt
+write global_var in scoping_test.txt
+
+write "SCOPING TEST COMPLETE" in scoping_test.txt

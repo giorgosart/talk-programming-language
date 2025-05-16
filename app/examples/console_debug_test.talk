@@ -1,0 +1,44 @@
+# Debug test using console output
+
+# Write to console for debugging
+write "Starting debug test" to console
+write "Testing scoping implementation" to console
+
+# Set global variable
+set x to 10
+write "Global x: " to console
+write x to console
+
+# Test function scoping
+define test_func
+    set x to 20
+    write "Function x: " to console
+    write x to console
+    
+call test_func
+
+# Check global variable
+write "After function, global x: " to console
+write x to console
+
+# Test if block scoping
+if true then
+    set x to 30
+    write "If block x: " to console
+    write x to console
+    
+# Check global variable
+write "After if block, global x: " to console
+write x to console
+
+# Test loop scoping
+repeat 1 times
+    set x to 40
+    write "Loop x: " to console
+    write x to console
+    
+# Check global variable
+write "After loop, global x: " to console
+write x to console
+
+write "Test complete" to console

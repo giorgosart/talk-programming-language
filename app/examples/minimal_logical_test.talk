@@ -1,0 +1,23 @@
+# Minimal logical operators test
+set a to 5
+set b to 10
+
+# Create a file to store our test results
+create file as "minimal_test.txt"
+
+# Test basic equality
+if a is equal to 5 then
+    write "Test 1: a equals 5" in minimal_test.txt
+else
+    write "Test 1: a does not equal 5" in minimal_test.txt
+
+# Test logical AND
+if a is equal to 5 and b is equal to 10 then
+    write "Test 2: AND works" in minimal_test.txt
+else
+    write "Test 2: AND fails" in minimal_test.txt
+
+# Read and output results
+read file minimal_test.txt into results
+write results in output.txt
+write "Minimal logical test completed."
