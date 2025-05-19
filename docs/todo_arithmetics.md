@@ -1,8 +1,3 @@
-
-
-```markdown
----
-
 ## 🧠 Phase 16: Arithmetic Operations
 
 ### **33.0 Core Arithmetic Operators**
