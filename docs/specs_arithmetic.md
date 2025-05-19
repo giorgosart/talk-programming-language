@@ -1,4 +1,3 @@
-```markdown
 ### 16. Arithmetic Operations
 
 The `.talk` language supports arithmetic expressions using natural language syntax.
