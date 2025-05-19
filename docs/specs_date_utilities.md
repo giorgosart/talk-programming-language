@@ -1,4 +1,3 @@
-```markdown
 ### 17. Date and Time Utilities
 
 `.talk` includes human-readable ways to work with dates and times using built-in expressions.
