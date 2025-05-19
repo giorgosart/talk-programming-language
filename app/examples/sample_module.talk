@@ -1,0 +1,17 @@
+# Sample module for testing imports in Talk language
+# This file: sample_module.talk
+
+# Define a greeting function
+function greet with name
+    write "Hello, " + name + "!" to console
+
+# Define a math function
+function add with a and b
+    return a + b
+
+# Define some constants
+set PI to 3.14159
+set VERSION to "1.0.0"
+
+# Export a message
+write "Sample module loaded successfully!" to console

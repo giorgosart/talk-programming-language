@@ -1,0 +1,35 @@
+# Example Talk script demonstrating the plugin system
+
+# Use the built-in uuid plugin to generate a unique ID
+use plugin generate uuid into my_uuid
+write "Generated UUID: " and my_uuid in console
+
+# Get system info using the built-in plugin
+use plugin system info into sys_info
+write "System information: " and sys_info in console
+
+# Generate a random number using the built-in plugin
+use plugin random number with 1 and 100 into random_value
+write "Random number between 1 and 100: " and random_value in console
+
+# Use string operations plugins
+variable name equal "Talk Programming Language"
+use plugin to lowercase with name into lower_name
+write "Lowercase: " and lower_name in console
+
+# Get current timestamp and format it
+use plugin current timestamp into timestamp
+use plugin format timestamp with timestamp into formatted_time
+write "Current time: " and formatted_time in console
+
+# Use environment variables
+use plugin system property with "user.dir" into working_dir
+write "Working directory: " and working_dir in console
+
+# Count lines in this file (needs the FileUtilsPlugin to be available)
+# use plugin count lines with "plugin_demo.talk" into line_count
+# write "This file has " and line_count and " lines." in console
+
+# Getting hostname (needs the SystemUtilsPlugin to be available)
+# use plugin get computer name into hostname
+# write "Computer name: " and hostname in console

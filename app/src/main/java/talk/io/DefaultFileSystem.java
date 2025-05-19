@@ -20,6 +20,11 @@ public class DefaultFileSystem implements FileSystem {
     }
     
     @Override
+    public java.util.List<String> readAllLines(String fileName) throws IOException {
+        return FileUtils.readAllLines(fileName);
+    }
+    
+    @Override
     public void writeFile(String fileName, String content) throws IOException {
         FileUtils.writeFile(fileName, content);
     }

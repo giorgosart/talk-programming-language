@@ -1,0 +1,18 @@
+# Example demonstrating import functionality
+# This file: import_example.talk
+
+write "Starting import example..." to console
+
+# Import the sample module
+import "app/examples/sample_module.talk"
+
+# Use functions from the imported module
+call greet with "User"
+call add with 10 and 20 into result
+write "The result of add(10, 20) is: " + result to console
+
+# Access constants from the imported module
+write "PI value from module: " + PI to console
+write "Version from module: " + VERSION to console
+
+write "Import example completed." to console

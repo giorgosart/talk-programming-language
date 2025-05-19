@@ -2,8 +2,12 @@ package talk.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import talk.instruction.FunctionDefinitionInstruction;
+import talk.instruction.BeforeEachInstruction;
+import talk.instruction.AfterEachInstruction;
 
 public class RuntimeContext {
     private final Map<String, Object> variables = new HashMap<>();
@@ -12,11 +16,68 @@ public class RuntimeContext {
 
     private final Map<String, FunctionDefinitionInstruction> functions = new HashMap<>();
     private final java.util.Deque<Map<String, Object>> variableStack = new java.util.ArrayDeque<>();
+    
+    // Test framework related fields
+    private final List<TestResult> testResults = new ArrayList<>();
+    private BeforeEachInstruction beforeEachBlock = null;
+    private AfterEachInstruction afterEachBlock = null;
+    private String currentTestName = null;
 
     public RuntimeContext() {
         variableStack.push(variables);
     }
 
+    // Test framework methods
+    public void addTestResult(TestResult result) {
+        testResults.add(result);
+    }
+    
+    public List<TestResult> getTestResults() {
+        return testResults;
+    }
+    
+    public void setBeforeEachBlock(BeforeEachInstruction block) {
+        this.beforeEachBlock = block;
+    }
+    
+    public BeforeEachInstruction getBeforeEachBlock() {
+        return beforeEachBlock;
+    }
+    
+    public void setAfterEachBlock(AfterEachInstruction block) {
+        this.afterEachBlock = block;
+    }
+    
+    public AfterEachInstruction getAfterEachBlock() {
+        return afterEachBlock;
+    }
+    
+    public void setCurrentTestName(String testName) {
+        this.currentTestName = testName;
+    }
+    
+    public String getCurrentTestName() {
+        return currentTestName;
+    }
+    
+    public void printTestSummary() {
+        System.out.println("\n--- Test Results ---");
+        int passCount = 0;
+        int failCount = 0;
+        
+        for (TestResult result : testResults) {
+            System.out.println(result);
+            if (result.isPassed()) {
+                passCount++;
+            } else {
+                failCount++;
+            }
+        }
+        
+        System.out.println("\nSummary: " + passCount + " passed, " + failCount + " failed, " + testResults.size() + " total");
+    }
+
+    // Existing methods
     public void registerFunction(String name, FunctionDefinitionInstruction def) {
         functions.put(name, def);
     }

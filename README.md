@@ -18,6 +18,24 @@ A simple, English-like scripting language for automating tasks and learning prog
    java -jar app/build/libs/talk.jar run path/to/script.talk
    ```
 
+3. **Start interactive REPL:**
+
+   ```sh
+   java -jar app/build/libs/talk.jar repl
+   ```
+   
+   Or use the standalone REPL for quick testing:
+   
+   ```sh
+   ./repl.sh
+   ```
+   
+   For enhanced experience with arrow key history navigation and tab completion:
+   
+   ```sh
+   ./enhanced_repl.sh
+   ```
+
 ---
 
 ## 📖 Language Reference

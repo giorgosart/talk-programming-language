@@ -16,16 +16,16 @@
 
 ### **41.0 Native `.talk` Testing Framework**
 
-- [ ] **41.1** Define `expect result of <expr> to be <value>` syntax
-- [ ] **41.2** Implement parser for test expectations
-- [ ] **41.3** Execute test blocks and capture assertions
-- [ ] **41.4** CLI output: number of tests passed/failed
-- [ ] **41.5** Add test runner docs and examples
+- [x] **41.1** Define `expect result of <expr> to be <value>` syntax
+- [x] **41.2** Implement parser for test expectations
+- [x] **41.3** Execute test blocks and capture assertions
+- [x] **41.4** CLI output: number of tests passed/failed
+- [x] **41.5** Add test runner docs and examples
 
 ### **42.0 Future and Bonus Features**
 
-- [ ] **42.1** `import` support for `.talk` scripts (file system)
-- [ ] **42.2** Plugin system (Java class registry with aliasing)
-- [ ] **42.3** Linter rules (unknown commands, improper nesting)
-- [ ] **42.4** Interactive REPL with single-line evaluation
-- [ ] **42.5** Examples and documentation for each enhancement
+- [x] **42.1** `import` support for `.talk` scripts (file system)
+- [x] **42.2** Plugin system (Java class registry with aliasing)
+- [x] **42.3** Linter rules (unknown commands, improper nesting)
+- [x] **42.4** Interactive REPL with single-line evaluation
+- [x] **42.5** Examples and documentation for each enhancement

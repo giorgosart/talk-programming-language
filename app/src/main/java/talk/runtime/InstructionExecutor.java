@@ -11,37 +11,13 @@ import talk.core.RuntimeContext;
 import talk.exception.*;
 import talk.expression.ExpressionResolver;
 import talk.expression.ListValue;
-import talk.instruction.AskInstruction;
-import talk.instruction.AssignmentInstruction;
-import talk.instruction.AttemptInstruction;
-import talk.instruction.AppendToFileInstruction;
-import talk.instruction.CopyFileInstruction;
-import talk.instruction.CreateFileInstruction;
-import talk.instruction.DeleteFileInstruction;
-import talk.instruction.FunctionCallInstruction;
-import talk.instruction.FunctionDefinitionInstruction;
-import talk.instruction.IfInstruction;
-import talk.instruction.ListDirectoryInstruction;
-import talk.instruction.LogInstruction;
-import talk.instruction.ReadFileInstruction;
-import talk.instruction.RepeatInstruction;
-import talk.instruction.ReturnInstruction;
-import talk.instruction.VariableInstruction;
-import talk.instruction.WriteInstruction;
+import talk.instruction.*;
 import talk.io.DefaultFileSystem;
 import talk.io.DefaultLogger;
 import talk.io.FileSystem;
 import talk.io.Logger;
 import talk.expression.DateUtil;
-import talk.instruction.AddDaysInstruction;
-import talk.instruction.DateAfterInstruction;
-import talk.instruction.DateBeforeInstruction;
-import talk.instruction.DateExpressionInstruction;
-import talk.instruction.DayOfWeekInstruction;
-import talk.instruction.DaysDifferenceInstruction;
-import talk.instruction.FormatDateInstruction;
-import talk.instruction.ParseDateInstruction;
-import talk.instruction.SubtractDaysInstruction;
+import talk.plugins.PluginRegistry;
 
 public class InstructionExecutor {
     private final RuntimeContext context;
@@ -560,6 +536,81 @@ public class InstructionExecutor {
             } catch (Exception e) {
                 throw new RuntimeException("Failed to compare dates: " + e.getMessage() + " (line " + dai.getLineNumber() + ")");
             }
+        } else if (instruction instanceof ImportInstruction) {
+            ImportInstruction importInst = (ImportInstruction) instruction;
+            String filePath = importInst.getFilePath();
+            
+            try {
+                // Check if file exists
+                if (!fileSystem.fileExists(filePath)) {
+                    // Try adding .talk extension if not already present
+                    if (!filePath.endsWith(".talk")) {
+                        filePath += ".talk";
+                    }
+                    
+                    if (!fileSystem.fileExists(filePath)) {
+                        throw new IOException("Import file not found: " + filePath);
+                    }
+                }
+                
+                // Read the file content
+                String fileContent = fileSystem.readFile(filePath);
+                String[] lines = fileContent.split("\n");
+                
+                // Convert to List<String>
+                java.util.List<String> linesList = new java.util.ArrayList<>();
+                for (String line : lines) {
+                    linesList.add(line);
+                }
+                
+                // Parse and execute
+                talk.core.Tokenizer tokenizer = new talk.core.Tokenizer();
+                List<talk.core.Tokenizer.Token> tokens = tokenizer.tokenize(linesList);
+                talk.Parser parser = new talk.Parser(tokens);
+                List<Instruction> importedInstructions = parser.parse();
+                
+                // Execute each instruction from the imported file
+                for (Instruction instr : importedInstructions) {
+                    execute(instr);
+                }
+                
+                System.out.println("[DEBUG] Successfully imported file: " + filePath);
+            } catch (IOException e) {
+                throw new TalkRuntimeException("Failed to import file '" + filePath + "': " + e.getMessage(), importInst.getLineNumber(), e);
+            }
+        } else if (instruction instanceof PluginCallInstruction) {
+            PluginCallInstruction pci = (PluginCallInstruction) instruction;
+            String pluginAlias = pci.getPluginAlias();
+            List<String> arguments = pci.getArguments();
+            String intoVariable = pci.getIntoVariable();
+            
+            // Check if the plugin exists
+            PluginRegistry registry = PluginRegistry.getInstance();
+            if (!registry.hasPlugin(pluginAlias)) {
+                throw new TalkRuntimeException("Plugin '" + pluginAlias + "' not found", pci.getLineNumber());
+            }
+            
+            // Convert arguments by resolving any variable references
+            Object[] args = new Object[arguments.size()];
+            for (int i = 0; i < arguments.size(); i++) {
+                args[i] = resolver.resolve(arguments.get(i));
+            }
+            
+            try {
+                // Execute the plugin
+                Object result = registry.execute(pluginAlias, args);
+                
+                // Store result if there's an 'into' variable
+                if (intoVariable != null) {
+                    context.setVariable(intoVariable, result);
+                }
+            } catch (Exception e) {
+                throw new TalkRuntimeException("Error executing plugin '" + pluginAlias + "': " + e.getMessage(), pci.getLineNumber(), e);
+            }
+        } 
+        else if (InstructionExecutorTestExtensions.isTestInstruction(instruction)) {
+            // Handle test framework instructions using the extension methods
+            InstructionExecutorTestExtensions.executeTestInstruction(this, context, resolver, instruction);
         } else {
             throw new TalkRuntimeException("Instruction type not supported in this phase");
         }

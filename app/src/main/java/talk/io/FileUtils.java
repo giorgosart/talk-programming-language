@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class FileUtils {
     public static boolean fileExists(String fileName) {
@@ -12,6 +13,10 @@ public class FileUtils {
 
     public static String readFile(String fileName) throws IOException {
         return Files.readString(Path.of(fileName));
+    }
+    
+    public static List<String> readAllLines(String fileName) throws IOException {
+        return Files.readAllLines(Path.of(fileName));
     }
 
     public static void writeFile(String fileName, String content) throws IOException {

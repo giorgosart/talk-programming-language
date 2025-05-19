@@ -1,0 +1,49 @@
+# This is a test file with intentional linting issues
+
+# Unknown instruction
+unknown_command hello world
+
+# Missing 'then'
+if 5 is greater than 3
+    write "This will cause a linting error"
+
+# Unclosed block
+if x is equal to 5 then
+    write "This block is not closed properly"
+    if y is equal to 10 then
+        write "Nested block"
+
+# Improper nesting
+if a is equal to 1 then
+write "This line should be indented"
+
+# Reserved word as variable
+set return to 42
+
+# Unused variable
+variable unused equals "This variable is never used"
+
+# Invalid variable name
+set 123invalid to "Invalid variable name starting with a number"
+
+# Missing operand in arithmetic expression
+set result to 5 plus
+
+# Invalid logical expression
+if and 5 is equal to 5 then
+    write "Invalid logical expression"
+
+# Proper code for comparison
+if x is equal to 5 then
+    write "This is valid"
+    write "Another valid line"
+
+# Unquoted string
+write hello world
+
+# This is a properly closed block with valid code
+if isValid is equal to true then
+    write "All good here"
+    set result to 10 plus 20
+otherwise
+    write "This is also fine"

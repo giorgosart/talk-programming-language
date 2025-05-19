@@ -145,6 +145,20 @@ public class Tokenizer {
         tokens.add(new Token("file", lineNumber));
         tokens.add(new Token(filePart, lineNumber));
     }
+    
+    // Handler for import statements
+    private void handleImport(String trimmed, int lineNumber, List<Token> tokens) {
+        String filePath = trimmed.substring("import ".length()).trim();
+        
+        // Remove quotes if present
+        if ((filePath.startsWith("\"") && filePath.endsWith("\"")) || 
+            (filePath.startsWith("'") && filePath.endsWith("'"))) {
+            filePath = filePath.substring(1, filePath.length() - 1);
+        }
+        
+        tokens.add(new Token("import", lineNumber));
+        tokens.add(new Token(filePath, lineNumber));
+    }
 
     // Handler for file copying
     private void handleCopyFile(String trimmed, int lineNumber, List<Token> tokens) {
@@ -294,6 +308,49 @@ public class Tokenizer {
             tokens.add(new Token(valuePart, lineNumber));
             tokens.add(new Token("by", lineNumber));
             tokens.add(new Token(delimiterPart, lineNumber));
+        }
+    }
+    
+    // Handler for test assertions
+    private void handleTestAssertion(String trimmed, int lineNumber, List<Token> tokens) {
+        if (trimmed.startsWith("expect result of ") && trimmed.contains(" to be ")) {
+            int toBeIdx = trimmed.indexOf(" to be ");
+            
+            String expressionPart = trimmed.substring(16, toBeIdx).trim();
+            String expectedValuePart = trimmed.substring(toBeIdx + 7).trim();
+            
+            tokens.add(new Token("expect", lineNumber));
+            tokens.add(new Token("result", lineNumber));
+            tokens.add(new Token("of", lineNumber));
+            tokens.add(new Token(expressionPart, lineNumber));
+            tokens.add(new Token("to", lineNumber));
+            tokens.add(new Token("be", lineNumber));
+            tokens.add(new Token(expectedValuePart, lineNumber));
+        }
+    }
+    
+    // Handler for test blocks
+    private void handleTestBlock(String trimmed, int lineNumber, List<Token> tokens) {
+        if (trimmed.startsWith("test ")) {
+            String description = trimmed.substring(5).trim();
+            
+            // Check if the description is quoted
+            if ((description.startsWith("\"") && description.endsWith("\"")) || 
+                (description.startsWith("'") && description.endsWith("'"))) {
+                // Remove the quotes
+                description = description.substring(1, description.length() - 1);
+            }
+            
+            tokens.add(new Token("test", lineNumber));
+            tokens.add(new Token(description, lineNumber));
+        } else if (trimmed.equals("before each test")) {
+            tokens.add(new Token("before", lineNumber));
+            tokens.add(new Token("each", lineNumber));
+            tokens.add(new Token("test", lineNumber));
+        } else if (trimmed.equals("after each test")) {
+            tokens.add(new Token("after", lineNumber));
+            tokens.add(new Token("each", lineNumber)); 
+            tokens.add(new Token("test", lineNumber));
         }
     }
 
@@ -622,126 +679,81 @@ public class Tokenizer {
         }
     }
     
-    // Helper method to tokenize a comparison expression
-    private void tokenizeComparison(String expr, String separator, String operatorToken, int lineNumber, List<Token> tokens) {
-        int idx = expr.indexOf(separator);
-        String left = expr.substring(0, idx).trim();
-        String right = expr.substring(idx + separator.length()).trim();
+    // Handler for plugin calls
+    private void handlePluginCall(String trimmed, int lineNumber, List<Token> tokens) {
+        // Import ArrayList
+        java.util.List<String> args = new java.util.ArrayList<>();
+        // Format: "use plugin <pluginAlias> with <arg1> and <arg2> and <arg3> ... into <variable>"
+        // or: "use plugin <pluginAlias> into <variable>"
+        // or: "use plugin <pluginAlias> with <arg1>"
         
-        // Add left expression
-        tokens.add(new Token(left, lineNumber));
+        String restOfLine = trimmed.substring("use plugin ".length());
+        String pluginAlias;
+        String argsStr = null;
+        String intoVar = null;
         
-        // Add operator as separate tokens
-        String[] operatorParts = operatorToken.split(" ");
-        for (String part : operatorParts) {
-            tokens.add(new Token(part, lineNumber));
+        // Check if there's an "into" clause
+        int intoIdx = restOfLine.indexOf(" into ");
+        if (intoIdx >= 0) {
+            intoVar = restOfLine.substring(intoIdx + 6).trim();
+            restOfLine = restOfLine.substring(0, intoIdx);
         }
         
-        // Add right expression
-        tokens.add(new Token(right, lineNumber));
-    }
-    
-    // Helper method to split a condition by logical operators (and, or, not) but preserve the operators
-    private List<String> splitByLogicalOperators(String condition) {
-        List<String> result = new ArrayList<>();
-        StringBuilder currentExpression = new StringBuilder();
-        
-        // Flags to handle quoted strings and parentheses properly
-        boolean inQuotes = false;
-        int parenthesesDepth = 0;
-        
-        int currentPos = 0;
-        while (currentPos < condition.length()) {
-            char currentChar = condition.charAt(currentPos);
-            
-            // Handle quoted strings
-            if (currentChar == '"') {
-                inQuotes = !inQuotes;
-                currentExpression.append(currentChar);
-                currentPos++;
-                continue;
-            }
-            
-            // Handle parentheses
-            if (currentChar == '(') {
-                parenthesesDepth++;
-                currentExpression.append(currentChar);
-                currentPos++;
-                continue;
-            }
-            if (currentChar == ')') {
-                parenthesesDepth--;
-                currentExpression.append(currentChar);
-                currentPos++;
-                continue;
-            }
-            
-            // Skip if we're in quotes or inside parentheses
-            if (inQuotes || parenthesesDepth > 0) {
-                currentExpression.append(currentChar);
-                currentPos++;
-                continue;
-            }
-            
-            // Check for logical operators
-            
-            // Check for " and " (case insensitive)
-            if (currentPos + 5 <= condition.length() && 
-                condition.substring(currentPos, currentPos + 5).toLowerCase().equals(" and ")) {
-                
-                // Add the current expression
-                result.add(currentExpression.toString().trim());
-                
-                // Add the operator
-                result.add("and");
-                
-                // Reset for next expression
-                currentExpression = new StringBuilder();
-                currentPos += 5;
-                continue;
-            }
-            
-            // Check for " or " (case insensitive)
-            if (currentPos + 4 <= condition.length() && 
-                condition.substring(currentPos, currentPos + 4).toLowerCase().equals(" or ")) {
-                
-                // Add the current expression
-                result.add(currentExpression.toString().trim());
-                
-                // Add the operator
-                result.add("or");
-                
-                // Reset for next expression
-                currentExpression = new StringBuilder();
-                currentPos += 4;
-                continue;
-            }
-            
-            // Check for "not " at the beginning of a condition or expression
-            if ((currentPos == 0 || currentExpression.length() == 0) && 
-                currentPos + 4 <= condition.length() && 
-                condition.substring(currentPos, currentPos + 4).toLowerCase().equals("not ")) {
-                
-                // Add the NOT operator
-                result.add("not");
-                
-                // Move past "not "
-                currentPos += 4;
-                continue;
-            }
-            
-            // Regular character, add to current expression
-            currentExpression.append(currentChar);
-            currentPos++;
+        // Check if there's a "with" clause
+        int withIdx = restOfLine.indexOf(" with ");
+        if (withIdx >= 0) {
+            pluginAlias = restOfLine.substring(0, withIdx).trim();
+            argsStr = restOfLine.substring(withIdx + 6).trim();
+        } else {
+            pluginAlias = restOfLine.trim();
         }
         
-        // Add the last expression if not empty
-        String lastExpr = currentExpression.toString().trim();
-        if (!lastExpr.isEmpty()) {
-            result.add(lastExpr);
+        // Add tokens
+        tokens.add(new Token("use", lineNumber));
+        tokens.add(new Token("plugin", lineNumber));
+        tokens.add(new Token(pluginAlias, lineNumber));
+        
+        if (argsStr != null) {
+            tokens.add(new Token("with", lineNumber));
+            
+            // Parse the arguments
+            List<String> args = new ArrayList<>();
+            StringBuilder argBuilder = new StringBuilder();
+            boolean inQuotes = false;
+            
+            for (int i = 0; i < argsStr.length(); i++) {
+                char c = argsStr.charAt(i);
+                if (c == '"') {
+                    inQuotes = !inQuotes;
+                    argBuilder.append(c);
+                } else if (!inQuotes && (i + 4 <= argsStr.length() && argsStr.substring(i, i + 5).equals(" and "))) {
+                    // Split on " and " but only if not inside quotes
+                    args.add(argBuilder.toString().trim());
+                    argBuilder.setLength(0);
+                    i += 4; // Skip " and "
+                } else {
+                    argBuilder.append(c);
+                }
+            }
+            
+            // Add the last argument
+            if (argBuilder.length() > 0) {
+                args.add(argBuilder.toString().trim());
+            }
+            
+            // Add all arguments as tokens
+            for (String arg : args) {
+                tokens.add(new Token(arg, lineNumber));
+                if (args.indexOf(arg) < args.size() - 1) {
+                    tokens.add(new Token("and", lineNumber));
+                }
+            }
         }
         
-        return result;
+        if (intoVar != null) {
+            tokens.add(new Token("into", lineNumber));
+            tokens.add(new Token(intoVar, lineNumber));
+        }
     }
 
     public List<Token> tokenize(List<String> lines) {
@@ -979,36 +991,29 @@ public class Tokenizer {
             } else if (trimmed.startsWith("delete file ")) {
                 handleDeleteFile(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("copy file ") && trimmed.contains(" to ")) {
+            } else if (trimmed.startsWith("copy file ")) {
                 handleCopyFile(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("list files in ") && trimmed.contains(" into ")) {
-                handleListFilesInDir(trimmed, i + 1, tokens);
+            } else if (trimmed.startsWith("list directory ")) {
+                handleListDirectory(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("log ")) {
-                handleLog(trimmed, i + 1, tokens);
+            } else if (trimmed.startsWith("if ")) {
+                handleIfStatement(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("define ")) {
-                handleDefine(trimmed, i + 1, tokens);
+            } else if (trimmed.equals("otherwise")) {
+                tokens.add(new Token("otherwise", i + 1));
                 continue;
-            } else if (trimmed.startsWith("return ")) {
-                handleReturn(trimmed, i + 1, tokens);
+            } else if (trimmed.startsWith("repeat ")) {
+                handleRepeatStatement(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("if ") && (trimmed.contains(" is before ") || trimmed.contains(" is after "))) {
-                handleDateComparison(trimmed, i + 1, tokens);
+            } else if (trimmed.startsWith("import ")) {
+                handleImport(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.startsWith("if ") && (trimmed.contains(" is equal to ") || trimmed.contains(" is not equal to ") || trimmed.contains(" is greater than ") || trimmed.contains(" is smaller than ") ||
-                trimmed.toUpperCase().contains(" AND ") || 
-                trimmed.toUpperCase().contains(" OR ") || 
-                trimmed.toUpperCase().startsWith("NOT "))) {
-                
-                // Handle the comparison and logical operators
-                handleComparisonOperators(trimmed, i + 1, tokens);
-                
-                prevIndent = indent;
+            } else if (trimmed.startsWith("use plugin ")) {
+                handlePluginCall(trimmed, i + 1, tokens);
                 continue;
-            } else if (trimmed.contains(" and ") || trimmed.contains(" or ") || trimmed.contains(" not ")) {
-                handleLogicalOperators(trimmed, i + 1, tokens);
+            } else if (trimmed.equals("attempt")) {
+                tokens.add(new Token("attempt", i + 1));
                 continue;
             } else {
                 handleArithmeticExpression(trimmed, i + 1, tokens);

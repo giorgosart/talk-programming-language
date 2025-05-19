@@ -1,0 +1,84 @@
+# Example test file for the Talk language testing framework
+# Run with: talk test app/examples/example_tests.talk
+
+# Global variables (available to all tests)
+set global_x to 10
+set global_y to 5
+
+# Test setup (runs before each test)
+before each test
+    # Reset variables before each test
+    set counter to 0
+    create file "test_output.txt"
+    write "Initial test data" to "test_output.txt"
+    write "Setting up test..." to console
+
+# Basic test with assertion
+test "Basic arithmetic operations"
+    # Local variable (scoped to this test only)
+    set local_z to 20
+    
+    # Test addition
+    expect result of global_x + 5 to be 15
+    
+    # Test subtraction
+    expect result of global_x - global_y to be 5
+    
+    # Test multiplication
+    expect result of global_x * 2 to be 20
+    
+    # Test division
+    expect result of global_x / 2 to be 5
+    
+    # Test with local variable
+    expect result of local_z / 4 to be 5
+    
+# Test setup and teardown for file operations
+test "File operations"
+    # Write to file and verify
+    write "Testing content" to "test_output.txt"
+    read "test_output.txt" into content
+    expect result of content to be "Testing content"
+
+# Test with string operations
+test "String manipulation"
+    # Test string concatenation
+    set greeting to "Hello"
+    set name to "World"
+    expect result of greeting + " " + name to be "Hello World"
+    
+    # Test with variables inside strings
+    set value to 42
+    set message to "The answer is " + value
+    expect result of message to be "The answer is 42"
+
+# Test with conditional logic
+test "Conditional operations"
+    # Test greater than
+    if global_x is greater than global_y then
+        # This test will only run if the condition is true
+        expect result of global_x - global_y to be 5
+    
+    # Test equality with complex expressions
+    set result to global_x + global_y
+    expect result of result to be 15
+    
+    # Intentional failing test (for demonstration)
+    # expect result of global_x to be 9999
+
+# Test with function calls
+test "Function operations"
+    function add_numbers with x and y
+        return x + y
+    
+    call add_numbers with 3 and 7 into sum
+    expect result of sum to be 10
+
+# Clean up after each test
+after each test
+    # Clean up after each test
+    if file "test_output.txt" exists then
+        delete file "test_output.txt"
+    write "Cleaning up test..." to console
+
+# End of tests

@@ -58,7 +58,6 @@ public interface FileSystem {
     
     /**
      * Copies a file from source to destination
-     * 
      * @param source The source file path
      * @param destination The destination file path
      * @throws IOException If an I/O error occurs
@@ -67,7 +66,6 @@ public interface FileSystem {
     
     /**
      * Lists the contents of a directory
-     * 
      * @param directoryPath The directory path
      * @return An array of file/directory names
      * @throws IOException If an I/O error occurs

@@ -34,7 +34,54 @@ This creates a runnable JAR at `app/build/libs/talk.jar`.
 
 ---
 
-## 4. Write Your Own Script
+## 4. Interactive REPL
+
+The Talk language includes an interactive REPL (Read-Eval-Print Loop) that allows you to experiment with Talk commands one line at a time.
+
+1. **Start the REPL:**
+   ```sh
+   java -jar app/build/libs/talk.jar repl
+   ```
+
+2. **Use the standalone REPL** (for quick testing without building the entire project):
+   ```sh
+   ./repl.sh
+   ```
+
+3. **Use the enhanced REPL** (with arrow key navigation, history search, and tab completion):
+   ```sh
+   ./enhanced_repl.sh
+   ```
+
+4. **Basic REPL commands:**
+   ```
+   > write "Hello, World!"
+   Hello, World!
+   
+   > variable x = 10
+   
+   > x + 5
+   15
+   
+   > help
+   (shows available commands and examples)
+   
+   > exit
+   (exits the REPL session)
+   ```
+
+5. **Enhanced REPL features:**
+   - Use up/down arrow keys to navigate through command history
+   - Press Tab to autocomplete keywords and variable names
+   - Use Ctrl+R to search through command history
+   - History is saved between sessions
+
+6. **For more detailed examples and documentation:**
+   - See `docs/repl_guide.md` and `docs/repl_examples.md`
+
+---
+
+## 5. Write Your Own Script
 Create a file, e.g. `my_script.talk`:
 ```
 variable name
@@ -48,13 +95,13 @@ java -jar app/build/libs/talk.jar run my_script.talk
 
 ---
 
-## 5. Language Basics
+## 6. Language Basics
 - See `README.md` for syntax, examples, and error handling.
 - See `docs/specs.md` for full language specification.
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 - If you see an error, check the line number and hint in the message.
 - Make sure your script uses the correct syntax (see README examples).
 - For help: `java -jar app/build/libs/talk.jar --help`

@@ -307,6 +307,18 @@ public class Parser {
         if ("return".equals(value)) {
             return parseReturn(line);
         }
+        if ("expect".equals(value)) {
+            return parseExpectAssertion(line);
+        }
+        if ("test".equals(value)) {
+            return parseTestBlock(line);
+        }
+        if ("before".equals(value)) {
+            return parseTestHook(line, true);
+        }
+        if ("after".equals(value)) {
+            return parseTestHook(line, false);
+        }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();
     }
@@ -624,6 +636,73 @@ public class Parser {
             pos++;
         }
         return new ReturnInstruction(expr, line);
+    }
+    
+    // Handler for parsing test assertions
+    private Instruction parseExpectAssertion(int line) {
+        // Syntax: expect result of <expression> to be <expected_value>
+        pos++; // Skip 'expect'
+        
+        expect("result");
+        expect("of");
+        
+        // Get the expression to evaluate
+        if (pos >= tokens.size()) {
+            throw new TalkSyntaxException("Expected expression after 'expect result of'", line);
+        }
+        String expression = expectValue();
+        
+        expect("to");
+        expect("be");
+        
+        // Get the expected value
+        if (pos >= tokens.size()) {
+            throw new TalkSyntaxException("Expected value after 'to be' in expect statement", line);
+        }
+        String expectedValue = expectValue();
+        
+        return new ExpectInstruction(expression, expectedValue, line);
+    }
+    
+    // Handler for parsing test blocks
+    private Instruction parseTestBlock(int line) {
+        // Syntax: test "description"
+        pos++; // Skip 'test'
+        
+        // Get the test description
+        if (pos >= tokens.size()) {
+            throw new TalkSyntaxException("Expected description after 'test'", line);
+        }
+        
+        String description = expectValue();
+        // Remove quotes if present
+        if ((description.startsWith("\"") && description.endsWith("\"")) || 
+            (description.startsWith("'") && description.endsWith("'"))) {
+            description = description.substring(1, description.length() - 1);
+        }
+        
+        // Parse the test block
+        List<Instruction> body = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+        
+        return new TestBlockInstruction(description, body, line);
+    }
+
+    // Handler for parsing before/after each test blocks
+    private Instruction parseTestHook(int line, boolean isBefore) {
+        // Syntax: before each test or after each test
+        pos++; // Skip 'before' or 'after'
+        
+        expect("each");
+        expect("test");
+        
+        // Parse the hook block
+        List<Instruction> body = parseIndentedBlockWithParentIndent(getIndentLevel(pos > 0 ? pos - 1 : 0));
+        
+        if (isBefore) {
+            return new BeforeEachInstruction(body, line);
+        } else {
+            return new AfterEachInstruction(body, line);
+        }
     }
 
     private Instruction parseInstruction() {

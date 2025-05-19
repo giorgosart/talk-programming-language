@@ -1,0 +1,102 @@
+# Advanced Plugin System Example
+# This script demonstrates various aspects of the plugin system
+
+# First, we'll use built-in plugin for basic utilities
+use plugin system info into sys_info
+write "SYSTEM INFO:" in console
+write sys_info in console
+write "" in console
+
+# Generate and manipulate UUIDs
+use plugin generate uuid into id1
+use plugin generate uuid into id2
+write "Generated UUIDs:" in console
+write "UUID 1: " and id1 in console
+write "UUID 2: " and id2 in console
+write "" in console
+
+# String manipulation plugins
+variable message equal "The Talk Programming Language"
+use plugin to uppercase with message into upper_message
+use plugin to lowercase with message into lower_message
+
+write "String manipulation:" in console
+write "Original: " and message in console
+write "Uppercase: " and upper_message in console
+write "Lowercase: " and lower_message in console
+write "" in console
+
+# Working with random numbers
+variable min equal 10
+variable max equal 20
+write "Generating random numbers..." in console
+
+# Generate 5 random numbers between min and max
+repeat 5 times
+  use plugin random number with min and max into rand
+  write "Random number: " and rand in console
+end repeat
+write "" in console
+
+# Date/time manipulation
+use plugin current timestamp into now
+write "Current timestamp: " and now in console
+
+# Format the timestamp in different ways
+use plugin format timestamp with now and "yyyy-MM-dd HH:mm:ss" into formatted_date
+write "Formatted date: " and formatted_date in console
+
+use plugin format timestamp with now and "EEE, d MMM yyyy" into day_format
+write "Day format: " and day_format in console
+write "" in console
+
+# System properties and environment
+write "System properties:" in console
+use plugin system property with "user.name" into username
+write "Username: " and username in console
+
+use plugin system property with "os.name" into os_name
+use plugin system property with "os.version" into os_version
+write "OS: " and os_name and " " and os_version in console
+
+use plugin system property with "user.dir" into working_dir
+write "Working directory: " and working_dir in console
+write "" in console
+
+# Creating a function that uses plugins
+define function generateId
+  use plugin generate uuid into temp_id
+  # We can manipulate the plugin result before returning
+  use plugin to uppercase with temp_id into result
+  return result
+end function
+
+# Call our function
+call generateId into custom_id
+write "Generated ID from function: " and custom_id in console
+
+# Conditional logic with plugin results
+use plugin random number with 1 and 10 into test_num
+if test_num is greater than 5 then
+  write "Generated number " and test_num and " is greater than 5" in console
+otherwise
+  write "Generated number " and test_num and " is less than or equal to 5" in console
+end if
+
+# Note: The commented sections below require the custom plugins to be registered
+# See the FileUtilsPlugin.java and SystemUtilsPlugin.java example implementations
+
+# Count lines in this file 
+# use plugin count lines with "advanced_plugin_demo.talk" into line_count
+# write "This file has " and line_count and " lines." in console
+
+# Get computer name
+# use plugin get computer name into hostname
+# write "Computer name: " and hostname in console
+
+# Show some running processes
+# use plugin list processes with 5 into processes
+# write "Top 5 processes:" in console
+# repeat for each proc in processes
+#   write "Process: " and proc in console
+# end repeat

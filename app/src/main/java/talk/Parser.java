@@ -16,6 +16,7 @@ import talk.instruction.RepeatInstruction;
 import talk.instruction.ReturnInstruction;
 import talk.core.Tokenizer;
 import talk.instruction.WriteInstruction;
+import talk.instruction.PluginCallInstruction;
 
 public class Parser {
     private final List<Tokenizer.Token> tokens;
@@ -245,6 +246,18 @@ public class Parser {
         return instructions;
     }
 
+    // Parse import statement
+    private Instruction parseImportStatement(int line) {
+        pos++; // Skip "import"
+        if (pos < tokens.size()) {
+            String filePath = tokens.get(pos).value;
+            pos++; // Move past the file path
+            return new talk.instruction.ImportInstruction(filePath, line);
+        } else {
+            throw new TalkSyntaxException("Expected file path after 'import'", line);
+        }
+    }
+
     private Instruction parseInstructionWithIndent(int parentIndent) {
         if (pos >= tokens.size()) return null;
         Tokenizer.Token token = tokens.get(pos);
@@ -279,6 +292,12 @@ public class Parser {
             Instruction ifInstr = parseIfInstruction(line);
             return ifInstr;
         }
+        // Add handler for plugin calls
+        if ("use".equals(value) && peekNext("plugin")) {
+            pos++;
+            pos++;
+            return parsePluginCallInstruction(line);
+        }
         // We shouldn't encounter 'otherwise' as a standalone instruction, but we
         // need to treat it specially when it's part of an if-otherwise structure
         if ("otherwise".equals(value)) {
@@ -312,10 +331,43 @@ public class Parser {
         if ("return".equals(value)) {
             return parseReturn(line);
         }
+        if ("import".equals(value)) {
+            return parseImportStatement(line);
+        }
         // fallback to original parseInstruction for all other cases
         return parseInstruction();
     }
 
+    /**
+     * Parse a plugin call instruction
+     * Format: use plugin <pluginAlias> [with arg1 and arg2 and ...] [into <variable>]
+     */
+    private Instruction parsePluginCallInstruction(int line) {
+        String pluginAlias = expectIdentifier();
+        List<String> arguments = new ArrayList<>();
+        String intoVariable = null;
+        
+        // Check if there are arguments (with keyword)
+        if (peek("with")) {
+            pos++; // Skip 'with'
+            
+            // Parse arguments separated by 'and'
+            arguments.add(expectValue());
+            while (peek("and")) {
+                pos++; // Skip 'and'
+                arguments.add(expectValue());
+            }
+        }
+        
+        // Check if there's an 'into' clause to store the result
+        if (peek("into")) {
+            pos++; // Skip 'into'
+            intoVariable = expectIdentifier();
+        }
+        
+        return new PluginCallInstruction(pluginAlias, arguments, intoVariable, line);
+    }
+    
     private List<Instruction> parseIndentedBlockWithParentIndent(int parentIndent) {
         List<Instruction> block = new ArrayList<>();
         if (peek("INDENT")) {

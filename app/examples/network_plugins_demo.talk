@@ -1,0 +1,53 @@
+# Network Utilities Plugin Example
+# This script demonstrates the use of network-related plugins
+
+# Note: This script requires the NetworkUtilsPlugin to be registered
+
+# First, let's check if a common website is reachable
+use plugin ping host with "example.com" into ping_result
+if ping_result is not equal to null then
+  write "example.com ping result:" in console
+  # Note: At this point in the Talk language, we cannot directly access
+  # the properties of the returned map, so we just print the entire result
+  write ping_result in console
+  write "" in console
+end if
+
+# Encode a URL string
+variable search_term equal "talk programming language"
+use plugin url encode with search_term into encoded_search
+write "URL encoded search term: " and encoded_search in console
+
+# Get the IP address for a hostname
+use plugin resolve hostname with "example.com" into ip_address
+write "IP address for example.com: " and ip_address in console
+write "" in console
+
+# Read content from a URL (with timeout)
+write "Fetching content from example.com..." in console
+variable timeout equal 10000  # 10 seconds
+use plugin read url with "http://example.com" and timeout into content
+
+# Print the first 200 characters of the content
+variable content_length equal 200
+# Note: In a more advanced implementation, we could have a substring plugin
+write "First " and content_length and " characters of content:" in console
+write content in console
+
+# Function to check multiple hosts
+define function check_hosts with hosts
+  variable results equal ""
+  repeat for each host in hosts
+    use plugin resolve hostname with host into ip
+    variable result equal host and ": " and ip
+    set results to results and result and "\n"
+  end repeat
+  return results
+end function
+
+# Create a list of hosts to check
+variable hosts equal "google.com", "github.com", "example.com" and "localhost"
+call check_hosts with hosts into host_results
+write "" in console
+write "Host resolution results:" in console
+write host_results in console
