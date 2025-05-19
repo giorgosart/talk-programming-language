@@ -1,4 +1,3 @@
-```markdown
 ### 15. Extended String Utilities
 
 This section expands the `.talk` language with richer, plain-English string manipulation capabilities.
